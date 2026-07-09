@@ -1,0 +1,261 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import type { EmployeeStat } from "@/lib/scoring";
+import { TierBadge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, SectionLabel } from "@/components/ui/card";
+import { cn, fmt } from "@/lib/utils";
+import { EmployeeDrawer } from "./employee-drawer";
+import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Flame, Medal } from "lucide-react";
+
+const PAGE_SIZE = 10;
+
+type SortKey = "totalPoints" | "upFloors" | "stairTrips" | "stairShare" | "currentStreak" | "activeDays";
+
+const COLS: { key: SortKey; label: string; align?: "right" }[] = [
+  { key: "upFloors", label: "Lantai Naik", align: "right" },
+  { key: "stairTrips", label: "Trip Tangga", align: "right" },
+  { key: "stairShare", label: "Share Tangga", align: "right" },
+  { key: "currentStreak", label: "Streak", align: "right" },
+  { key: "totalPoints", label: "Poin", align: "right" },
+];
+
+const PERSONAS = [
+  { key: "all", label: "Semua" },
+  { key: "champion", label: "Pegiat Tangga" },
+  { key: "regular", label: "Rutin" },
+  { key: "occasional", label: "Kadang" },
+  { key: "rare", label: "Jarang" },
+];
+
+const MEDAL = ["#ffcb05", "#c0c6ce", "#c2803f"];
+
+export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
+  const [sortKey, setSortKey] = useState<SortKey>("totalPoints");
+  const [asc, setAsc] = useState(false);
+  const [q, setQ] = useState("");
+  const [persona, setPersona] = useState("all");
+  const [selected, setSelected] = useState<EmployeeStat | null>(null);
+  const [page, setPage] = useState(1);
+
+  // reset ke halaman 1 saat filter/sort berubah
+  useEffect(() => setPage(1), [q, persona, sortKey, asc]);
+
+  const rankMap = useMemo(() => {
+    const m = new Map<string, number>();
+    [...stats].sort((a, b) => b.totalPoints - a.totalPoints).forEach((s, i) => m.set(s.emp.id, i + 1));
+    return m;
+  }, [stats]);
+
+  const maxPoints = Math.max(1, ...stats.map((s) => s.totalPoints));
+
+  const rows = useMemo(() => {
+    let r = stats.filter((s) => {
+      const matchQ =
+        !q ||
+        s.emp.name.toLowerCase().includes(q.toLowerCase()) ||
+        s.emp.unit.toLowerCase().includes(q.toLowerCase());
+      const matchP = persona === "all" || s.emp.persona === persona;
+      return matchQ && matchP;
+    });
+    r = [...r].sort((a, b) => {
+      const d = (a[sortKey] as number) - (b[sortKey] as number);
+      return asc ? d : -d;
+    });
+    return r;
+  }, [stats, q, persona, sortKey, asc]);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const fromRow = rows.length ? (safePage - 1) * PAGE_SIZE + 1 : 0;
+  const toRow = Math.min(safePage * PAGE_SIZE, rows.length);
+
+  const toggleSort = (k: SortKey) => {
+    if (k === sortKey) setAsc((v) => !v);
+    else {
+      setSortKey(k);
+      setAsc(false);
+    }
+  };
+
+  return (
+    <>
+      <Card className="animate-fade-in">
+        <CardHeader className="flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+          <CardTitle>
+            <SectionLabel>Peringkat Pegawai</SectionLabel>
+            <h3 className="text-sm font-semibold">Leaderboard · {rows.length} pegawai</h3>
+          </CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Cari nama / unit…"
+                className="h-8 w-40 rounded-lg border border-border bg-background pl-8 pr-2 text-xs outline-none transition-colors focus:border-primary/50"
+              />
+            </div>
+          </div>
+        </CardHeader>
+
+        <div className="flex flex-wrap gap-1 px-5 pb-3">
+          {PERSONAS.map((p) => (
+            <button
+              key={p.key}
+              onClick={() => setPersona(p.key)}
+              className={cn(
+                "rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors",
+                persona === p.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="scrollbar-thin overflow-x-auto">
+          <table className="w-full min-w-[720px] border-collapse text-sm">
+            <thead>
+              <tr className="border-y border-border text-[10px] uppercase tracking-wider text-muted-foreground">
+                <th className="w-14 px-4 py-2.5 text-left font-semibold">#</th>
+                <th className="px-2 py-2.5 text-left font-semibold">Pegawai</th>
+                <th className="px-2 py-2.5 text-left font-semibold">Tier</th>
+                {COLS.map((c) => (
+                  <th
+                    key={c.key}
+                    onClick={() => toggleSort(c.key)}
+                    className="cursor-pointer select-none px-3 py-2.5 text-right font-semibold hover:text-foreground"
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {c.label}
+                      <span className="flex flex-col -space-y-1.5">
+                        <ChevronUp className={cn("h-3 w-3", sortKey === c.key && asc ? "text-primary" : "text-muted-foreground/40")} />
+                        <ChevronDown className={cn("h-3 w-3", sortKey === c.key && !asc ? "text-primary" : "text-muted-foreground/40")} />
+                      </span>
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {pageRows.map((s) => {
+                const rank = rankMap.get(s.emp.id)!;
+                const initials = s.emp.name.replace(/—.*/, "").trim().split(" ").slice(0, 2).map((w) => w[0]).join("");
+                return (
+                  <tr
+                    key={s.emp.id}
+                    onClick={() => setSelected(s)}
+                    className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/40"
+                  >
+                    <td className="px-4 py-2.5">
+                      {rank <= 3 ? (
+                        <span
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold"
+                          style={{ background: `${MEDAL[rank - 1]}22`, color: MEDAL[rank - 1] }}
+                        >
+                          {rank}
+                        </span>
+                      ) : (
+                        <span className="tabular pl-1.5 text-xs text-muted-foreground">{rank}</span>
+                      )}
+                    </td>
+                    <td className="px-2 py-2.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-[11px] font-semibold text-muted-foreground">
+                          {initials}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 truncate font-medium">
+                            {s.emp.name.replace(/ — .*/, "")}
+                            {s.emp.real && <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--success))]" />}
+                          </div>
+                          <div className="truncate text-[11px] text-muted-foreground">
+                            {s.emp.unit} · {s.emp.office}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-2 py-2.5">
+                      <TierBadge tier={s.tier} />
+                    </td>
+                    <td className="tabular px-3 py-2.5 text-right text-[hsl(var(--success))]">{fmt(s.upFloors)}</td>
+                    <td className="tabular px-3 py-2.5 text-right text-muted-foreground">{fmt(s.stairTrips)}</td>
+                    <td className="px-3 py-2.5 text-right">
+                      <span className="tabular inline-flex items-center gap-1.5">
+                        <span className="hidden h-1.5 w-10 overflow-hidden rounded-full bg-muted sm:inline-block">
+                          <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.round(s.stairShare * 100)}%` }} />
+                        </span>
+                        {Math.round(s.stairShare * 100)}%
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      <span className="tabular inline-flex items-center gap-1 text-[hsl(var(--warning))]">
+                        {s.currentStreak > 0 && <Flame className="h-3 w-3" />}
+                        {s.currentStreak}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="tabular font-bold text-foreground">{fmt(s.totalPoints)}</span>
+                        <span className="h-1 w-16 overflow-hidden rounded-full bg-muted">
+                          <span
+                            className="block h-full rounded-full bg-gradient-to-r from-primary to-pln-yellow"
+                            style={{ width: `${(s.totalPoints / maxPoints) * 100}%` }}
+                          />
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Medal className="h-3.5 w-3.5" />
+            {fromRow}–{toRow} dari {rows.length} · klik baris untuk detail
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+              className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={cn(
+                  "h-7 w-7 rounded-md text-[11px] font-medium transition-colors",
+                  p === safePage
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+              className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </Card>
+
+      <EmployeeDrawer stat={selected} onClose={() => setSelected(null)} />
+    </>
+  );
+}

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulasi Konsumsi Lift v2 — Naik vs Turun Gedung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B2447;--navy2:#123a6b;--teal:#12B5A8;--teal-d:#0d8a80;
+    --amber:#F2A900;--amber-d:#c98a00;--bg:#EEF2F7;--surface:#FFFFFF;
+    --line:#D7E0EC;--ink:#0B2447;--muted:#6B7E97;--muted2:#8fa2ba;--red:#E4572E;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.45;padding:20px;font-size:14px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header.head{border-left:5px solid var(--teal);padding:2px 0 2px 16px;margin-bottom:6px}
+  header.head .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal-d);font-weight:600}
+  header.head h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin-top:2px}
+  header.head p{color:var(--muted);font-size:13px;margin-top:3px;max-width:74ch}
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:18px;margin-top:18px;align-items:start}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .panel h2{font-size:11px;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--navy);font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .panel h2::before{content:"";width:7px;height:7px;background:var(--amber);border-radius:2px;transform:rotate(45deg)}
+  .ctrl{margin-bottom:13px}.ctrl:last-child{margin-bottom:0}
+  .ctrl label{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+  .ctrl label .val{font-family:var(--mono);font-weight:600;color:var(--ink);font-size:13px}
+  input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--line);border-radius:4px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--teal);cursor:pointer;border:2px solid #fff;box-shadow:0 1px 3px rgba(11,36,71,.3)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--teal);cursor:pointer;border:2px solid #fff}
+  input.up::-webkit-slider-thumb{background:var(--amber)}input.up::-moz-range-thumb{background:var(--amber)}
+  input.dn::-webkit-slider-thumb{background:var(--navy)}input.dn::-moz-range-thumb{background:var(--navy)}
+  .seg{display:flex;gap:6px;margin-bottom:13px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:56px;font-family:var(--sans);font-size:12px;font-weight:500;padding:7px 4px;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;cursor:pointer;transition:all .12s}
+  .seg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .subhead{font-size:11px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);margin:16px 0 10px;padding-top:12px;border-top:1px dashed var(--line)}
+  .subhead:first-child{margin-top:0;padding-top:0;border-top:none}
+  .overload{font-size:11.5px;font-family:var(--mono);color:var(--red);margin-top:-6px;margin-bottom:10px;display:none}
+  .overload.show{display:block}
+
+  /* hero up vs down */
+  .hero{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
+  @media(max-width:520px){.hero{grid-template-columns:1fr}}
+  .hero .side{padding:16px 18px;background:var(--surface)}
+  .hero .side.up{border-right:1px solid var(--line)}
+  @media(max-width:520px){.hero .side.up{border-right:none;border-bottom:1px solid var(--line)}}
+  .hero .dir{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:6px}
+  .hero .up .dir{color:var(--amber-d)}.hero .dn .dir{color:var(--navy)}
+  .hero .meta{font-size:11.5px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+  .hero .fig{font-family:var(--mono);font-size:30px;font-weight:600;letter-spacing:-.02em;margin-top:8px;line-height:1}
+  .hero .figu{font-size:13px;color:var(--muted);font-family:var(--mono)}
+  .hero .mode{margin-top:8px}
+  .tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
+  .tag.draw{background:#fdf1d6;color:var(--amber-d)}.tag.regen{background:#d6f5f1;color:var(--teal-d)}
+  .verdict{grid-column:1/-1;background:var(--navy);color:#e8eef5;padding:12px 18px;font-size:12.5px;line-height:1.5}
+  .verdict b{color:#fff}.verdict .hl{color:var(--amber)}.verdict .hlt{color:var(--teal)}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  @media(max-width:620px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px;position:relative;overflow:hidden}
+  .kpi::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--teal)}
+  .kpi.amber::after{background:var(--amber)}.kpi.navy::after{background:var(--navy)}
+  .kpi .lab{font-size:11px;color:var(--muted);font-weight:500}
+  .kpi .num{font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:-.02em;margin-top:3px;line-height:1}
+  .kpi .unit{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .kpi .sub{font-size:11px;color:var(--muted2);margin-top:4px;font-family:var(--mono)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:720px){.row2{grid-template-columns:1fr}}
+  table.leg{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.leg th,table.leg td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--line)}
+  table.leg th:first-child,table.leg td:first-child{text-align:left}
+  table.leg thead th{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  table.leg td.mono{font-family:var(--mono);font-weight:500}
+  .pos{color:var(--amber-d)}.neg{color:var(--teal-d)}
+  svg{display:block;width:100%;overflow:visible}
+  .cap{font-size:11.5px;color:var(--muted);margin-top:8px;font-family:var(--mono)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:8px;font-family:var(--mono)}
+  .legend span{display:inline-flex;align-items:center;gap:5px}.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .note{background:#fbfcfe;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--muted);margin-top:16px}
+  .note b{color:var(--ink)}.note.warn{border-left:3px solid var(--amber)}
+  .compare{display:flex;align-items:baseline;gap:8px;font-family:var(--mono);margin-top:6px}
+  .compare .big{font-size:20px;font-weight:600;color:var(--teal-d)}
+  .foot{font-size:11px;color:var(--muted2);margin-top:18px;font-family:var(--mono);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">PLN Icon Plus · SOLAR · Load Modeling · v2</div>
+    <h1>Konsumsi Listrik Lift — Naik vs Turun Gedung</h1>
+    <p>Beban diturunkan dari <b>jumlah orang × berat badan</b>, terpisah untuk arah naik dan turun. Konsumsi diklasifikasi motoring (tarik grid) vs regeneratif per arah — memperlihatkan bahwa memindahkan penumpang ke atas gedung jauh lebih boros daripada ke bawah.</p>
+  </header>
+
+  <div class="grid">
+    <div class="panel" id="controls">
+      <h2>Parameter</h2>
+
+      <div class="subhead">Orang &amp; Berat Badan</div>
+      <div class="ctrl"><label>Berat badan rata-rata <span class="val" id="vw">68 kg/org</span></label><input type="range" id="w" min="40" max="110" step="1" value="68"></div>
+      <div class="ctrl"><label>Orang saat NAIK <span class="val" id="vnu">10 org</span></label><input type="range" class="up" id="nu" min="0" max="20" step="1" value="10"></div>
+      <div class="overload" id="olu">⚠ Overload: melebihi rated 800 kg — lift tidak akan jalan</div>
+      <div class="ctrl"><label>Orang saat TURUN <span class="val" id="vnd">0 org</span></label><input type="range" class="dn" id="nd" min="0" max="20" step="1" value="0"></div>
+      <div class="overload" id="old">⚠ Overload: melebihi rated 800 kg — lift tidak akan jalan</div>
+      <div class="seg" id="scenSeg">
+        <button data-scen="uppeak" class="on">Up-peak</button>
+        <button data-scen="downpeak">Down-peak</button>
+        <button data-scen="twoway">Two-way</button>
+        <button data-scen="full">Penuh</button>
+      </div>
+
+      <div class="subhead">Lift &amp; Gedung</div>
+      <div class="ctrl"><label>Kapasitas rated, Q <span class="val" id="vQ">800 kg</span></label><input type="range" id="Q" min="450" max="1600" step="50" value="800"></div>
+      <div class="ctrl"><label>Jumlah lantai <span class="val" id="vN">17</span></label><input type="range" id="N" min="2" max="40" step="1" value="17"></div>
+      <div class="ctrl"><label>Tinggi antar-lantai, h <span class="val" id="vh">3.5 m</span></label><input type="range" id="h" min="2.8" max="5" step="0.1" value="3.5"></div>
+      <div class="ctrl"><label>Kecepatan rated, v <span class="val" id="vv">2.0 m/s</span></label><input type="range" id="v" min="0.5" max="4" step="0.1" value="2.0"></div>
+      <div class="ctrl"><label>Akselerasi, a <span class="val" id="va">1.0 m/s²</span></label><input type="range" id="a" min="0.4" max="1.5" step="0.1" value="1.0"></div>
+
+      <div class="subhead">Mekanikal &amp; Drive</div>
+      <div class="ctrl"><label>Massa bergerak (car+cwt+inersia) <span class="val" id="vM">3100 kg</span></label><input type="range" id="M" min="1500" max="7000" step="100" value="3100"></div>
+      <div class="ctrl"><label>Koef. penyeimbang, k <span class="val" id="vk">0.50</span></label><input type="range" id="k" min="0.35" max="0.55" step="0.01" value="0.5"></div>
+      <div class="ctrl"><label>Efisiensi lift-work, η <span class="val" id="veta">0.75</span></label><input type="range" id="eta" min="0.6" max="0.9" step="0.01" value="0.75"></div>
+      <div class="seg" id="regenSeg">
+        <button data-regen="1" class="on">Regen drive</button>
+        <button data-regen="0">Non-regen</button>
+      </div>
+
+      <div class="subhead">Overhead &amp; Standby</div>
+      <div class="ctrl"><label>Auxiliary saat gerak <span class="val" id="vaux">250 W</span></label><input type="range" id="aux" min="50" max="600" step="10" value="250"></div>
+      <div class="ctrl"><label>Energi pintu / siklus <span class="val" id="vdoor">0.2 Wh</span></label><input type="range" id="door" min="0" max="1" step="0.05" value="0.2"></div>
+      <div class="ctrl"><label>Dwell per stop <span class="val" id="vdwell">7 s</span></label><input type="range" id="dwell" min="0" max="20" step="1" value="7"></div>
+      <div class="ctrl"><label>Daya standby (24 jam) <span class="val" id="vstb">200 W</span></label><input type="range" id="stb" min="0" max="500" step="10" value="200"></div>
+
+      <div class="subhead">Operasi</div>
+      <div class="ctrl"><label>Lantai ditempuh / trip <span class="val" id="vft">16</span></label><input type="range" id="ft" min="1" max="39" step="1" value="16"></div>
+      <div class="seg" id="stopSeg">
+        <button data-stop="express" class="on">Ekspres</button>
+        <button data-stop="all">All-stops</button>
+        <button data-stop="custom">Custom</button>
+      </div>
+      <div class="ctrl" id="customStopWrap" style="display:none"><label>Stop per trip <span class="val" id="vns">4</span></label><input type="range" id="ns" min="1" max="39" step="1" value="4"></div>
+      <div class="ctrl"><label>Round-trip / hari <span class="val" id="vtd">150</span></label><input type="range" id="td" min="0" max="2000" step="10" value="150"></div>
+      <div class="ctrl"><label>Tarif listrik <span class="val" id="vtar">Rp 1.450/kWh</span></label><input type="range" id="tar" min="800" max="2500" step="50" value="1450"></div>
+    </div>
+
+    <div>
+      <!-- HERO: naik vs turun -->
+      <div class="hero">
+        <div class="side up">
+          <div class="dir">▲ Kabin Naik</div>
+          <div class="meta" id="upMeta">10 org · 680 kg</div>
+          <div class="fig pos" id="upFig">–</div><span class="figu">Wh net / leg</span>
+          <div class="mode" id="upMode"></div>
+        </div>
+        <div class="side dn">
+          <div class="dir">▼ Kabin Turun</div>
+          <div class="meta" id="dnMeta">0 org · 0 kg</div>
+          <div class="fig" id="dnFig">–</div><span class="figu">Wh net / leg</span>
+          <div class="mode" id="dnMode"></div>
+        </div>
+        <div class="verdict" id="verdict"></div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi amber"><div class="lab">Konsumsi harian (net)</div><div class="num" id="kDay">–</div><div class="unit">kWh/hari</div><div class="sub" id="kDaySub"></div></div>
+        <div class="kpi navy"><div class="lab">Konsumsi tahunan</div><div class="num" id="kYear">–</div><div class="unit">kWh/tahun</div><div class="sub" id="kYearSub"></div></div>
+        <div class="kpi amber"><div class="lab">Puncak demand</div><div class="num" id="kPeak">–</div><div class="unit">kW sesaat</div><div class="sub" id="kPeakSub"></div></div>
+        <div class="kpi"><div class="lab">Energi / orang·lantai</div><div class="num" id="kPPF">–</div><div class="unit">Wh</div><div class="sub">naik, per orang per lantai</div></div>
+      </div>
+
+      <div class="row2">
+        <div class="panel">
+          <h2>Rincian per trip</h2>
+          <table class="leg">
+            <thead><tr><th>Leg</th><th>Beban</th><th>Tarik grid</th><th>Regen</th><th>Net</th></tr></thead>
+            <tbody id="legBody"></tbody>
+          </table>
+          <div class="note" id="legNote" style="margin-top:12px"></div>
+        </div>
+        <div class="panel">
+          <h2>Profil energi per lantai · shaft (naik)</h2>
+          <svg id="shaft" viewBox="0 0 300 340" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="legend">
+            <span><i style="background:var(--amber)"></i>Tarik grid</span>
+            <span><i style="background:var(--teal)"></i>Regen</span>
+            <span><i style="background:var(--line)"></i>Pass-through</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="row2" style="margin-top:18px">
+        <div class="panel">
+          <h2>Konsumsi vs jumlah penumpang</h2>
+          <svg id="loadcurve" viewBox="0 0 360 220" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="cap" id="loadcurveCap">Titik seimbang = perpotongan nol. Di kiri titik seimbang naik=regen; di kanan naik=motoring.</div>
+        </div>
+        <div class="panel">
+          <h2>Neraca harian &amp; nilai regen</h2>
+          <svg id="daybar" viewBox="0 0 360 150" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="compare"><span style="font-size:12px;color:var(--muted)">Hemat regen drive:</span><span class="big" id="regenSave">–</span></div>
+          <div class="cap" id="regenNote"></div>
+        </div>
+      </div>
+
+      <div class="note warn" id="mainNote"></div>
+
+      <div class="foot">
+        Beban = n × berat_badan. Δm = beban − k·Q (bertanda). Naik: motoring bila Δm&gt;0; Turun: motoring bila Δm&lt;0. E = |Δm|·g·H/η (lift-work) + n_stop·[½M·v²·faktor drive + P_aux·t + E_pintu]. Regen mengembalikan energi overhauling & KE deselerasi (×η); non-regen membuang ke braking resistor. Standby = baseload 24 jam.<br>
+        Anchor verifiable: rating orang lift dihitung 75 kg/orang (EN 81-20 / ISO 8100-1) — berat badan riil Indonesia umumnya lebih rendah, jadi rating "≈Q/75 orang" bukan beban aktual. Batas jumlah orang riil juga dibatasi luas kabin, bukan hanya berat. η, M_tot, overhead per-stop = estimasi fisika; presisi butuh ISO 25745-1 / AMR unit ThyssenKrupp aktual.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const g=9.81,$=id=>document.getElementById(id);
+const S={w:68,nu:10,nd:0,Q:800,N:17,h:3.5,v:2.0,a:1.0,M:3100,k:0.5,eta:0.75,regen:1,
+         aux:250,door:0.2,dwell:7,stb:200,ft:16,stopMode:'express',ns:4,td:150,tar:1450};
+
+function nStops(){return S.stopMode==='express'?1:S.stopMode==='all'?S.ft:Math.min(S.ns,S.ft);}
+
+function leg(loadKg,dir,over){
+  const regen=over&&over.regen!==undefined?over.regen:S.regen;
+  const H=S.ft*S.h, nStop=nStops(), segH=H/nStop, etaK=0.87;
+  const dm=loadKg-S.k*S.Q; const motoring=dir==='up'?dm>0:dm<0;
+  const liftJ=Math.abs(dm)*g*H; let gridJ=0,regenJ=0;
+  if(motoring)gridJ+=liftJ/S.eta; else if(regen)regenJ+=liftJ*S.eta;
+  const vpk=Math.min(S.v,Math.sqrt(S.a*segH)); const Ekin=0.5*S.M*vpk*vpk;
+  const dacc=vpk*vpk/(2*S.a); let tTrav=vpk<S.v?2*vpk/S.a:2*(S.v/S.a)+(segH-2*dacc)/S.v;
+  gridJ+=nStop*(Ekin/etaK + S.aux*(tTrav+S.dwell) + S.door*3600);
+  regenJ+=nStop*(regen?Ekin*etaK:0);
+  const Fpk=Math.abs(dm)*g+S.M*S.a; const peakW=motoring?Fpk*vpk/S.eta:0;
+  return {gridWh:gridJ/3600,regenWh:regenJ/3600,netWh:(gridJ-regenJ)/3600,motoring,
+          peakKW:peakW/1000,tActive:nStop*(tTrav+S.dwell),nStop};
+}
+function daily(over){
+  const up=leg(S.nu*S.w,'up',over), dn=leg(S.nd*S.w,'down',over);
+  const runNet=S.td*(up.netWh+dn.netWh);
+  const activeH=S.td*(up.tActive+dn.tActive)/3600;
+  const stb=(over&&over.stb!==undefined?over.stb:S.stb)*Math.max(0,24-activeH);
+  return {up,dn,runKWh:runNet/1000,stbKWh:stb/1000,
+          totalKWh:Math.max(0,(runNet+stb)/1000),peakKW:Math.max(up.peakKW,dn.peakKW)};
+}
+const fmt=(x,d=1)=>x.toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+const rupiah=x=>'Rp '+Math.round(x).toLocaleString('id-ID');
+const modeTag=(l,regen)=>l.motoring?'<span class="tag draw">motoring · tarik grid</span>':(regen?'<span class="tag regen">regeneratif · kembali</span>':'<span class="tag regen">assisted · dibuang</span>');
+
+function render(){
+  const D=daily();
+  const balance=S.k*S.Q;
+
+  // hero
+  $('upMeta').textContent=`${S.nu} org · ${Math.round(S.nu*S.w)} kg (${fmt(S.nu*S.w/S.Q*100,0)}% rated)`;
+  $('dnMeta').textContent=`${S.nd} org · ${Math.round(S.nd*S.w)} kg (${fmt(S.nd*S.w/S.Q*100,0)}% rated)`;
+  $('upFig').textContent=(D.up.netWh>=0?'':'−')+fmt(Math.abs(D.up.netWh),1);
+  $('dnFig').textContent=(D.dn.netWh>=0?'':'−')+fmt(Math.abs(D.dn.netWh),1);
+  $('upFig').className='fig '+(D.up.netWh>=0?'pos':'neg');
+  $('dnFig').className='fig '+(D.dn.netWh>=0?'pos':'neg');
+  $('upMode').innerHTML=modeTag(D.up,S.regen);
+  $('dnMode').innerHTML=modeTag(D.dn,S.regen);
+
+  // verdict
+  const upC=D.up.netWh, dnC=D.dn.netWh;
+  let v=`<b>Titik seimbang = k·Q = <span class="hl">${fmt(balance,0)} kg</span></b>. `;
+  if(S.nu*S.w>balance) v+=`Kabin naik &gt; titik seimbang → <span class="hl">motoring (boros)</span>. `;
+  else v+=`Kabin naik &lt; titik seimbang → <span class="hlt">counterweight membantu</span>. `;
+  const dominUp=upC>dnC;
+  v+=`Per leg, <b>${dominUp?'NAIK':'TURUN'}</b> lebih boros (${fmt(Math.abs(dominUp?upC:dnC),1)} vs ${fmt(Math.abs(dominUp?dnC:upC),1)} Wh). `;
+  if(S.nu>S.nd) v+=`Anda memindahkan penumpang <span class="hl">KE ATAS</span> — leg mahal; naik penuh + turun kosong sering membuat kedua arah motoring.`;
+  else if(S.nd>S.nu) v+=`Anda memindahkan penumpang <span class="hlt">KE BAWAH</span> — sebagian besar dibantu gravitasi/counterweight, energi rendah atau mengembalikan.`;
+  else v+=`Beban naik=turun: naik motoring, turun regeneratif (jika regen drive) — pola klasik antar-penumpang dua arah.`;
+  $('verdict').innerHTML=v;
+
+  // kpis
+  $('kDay').textContent=fmt(D.totalKWh,1);
+  $('kDaySub').textContent='≈ '+rupiah(D.totalKWh*S.tar)+'/hari';
+  $('kYear').textContent=fmt(D.totalKWh*365,0);
+  $('kYearSub').textContent='≈ '+rupiah(D.totalKWh*365*S.tar);
+  $('kPeak').textContent=fmt(D.peakKW,1);
+  $('kPeakSub').textContent=D.peakKW>0?'saat leg motoring':'tidak ada leg motoring';
+  const ppf=S.nu>0?D.up.netWh/S.nu/S.ft:0;
+  $('kPPF').textContent=fmt(ppf,2);
+
+  // table
+  const rows=[['Naik',D.up,S.nu],['Turun',D.dn,S.nd]];
+  $('legBody').innerHTML=rows.map(([n,l,cnt])=>{
+    const netCls=l.netWh>=0?'pos':'neg';
+    return `<tr><td>${n}</td><td class="mono">${cnt}×${S.w}=${Math.round(cnt*S.w)}kg</td><td class="mono pos">${fmt(l.gridWh,1)}</td><td class="mono neg">${l.regenWh>0?'−'+fmt(l.regenWh,1):'0.0'}</td><td class="mono ${netCls}">${fmt(l.netWh,1)}</td></tr>`;
+  }).join('')+
+  `<tr style="border-top:2px solid var(--navy)"><td><b>Round-trip</b></td><td></td><td colspan="2"></td><td class="mono"><b>${fmt(D.up.netWh+D.dn.netWh,1)}</b></td></tr>`;
+
+  // leg note
+  let ln='';
+  const bothMotor=D.up.motoring&&D.dn.motoring;
+  const bothRegen=(!D.up.motoring)&&(!D.dn.motoring);
+  if(bothMotor) ln=`<b>Kedua leg motoring.</b> Naik terisi + turun kosong (atau sebaliknya di bawah titik seimbang) → grid ditarik di kedua arah. Ini pola <b>termahal</b> — khas up-peak pagi. Round-trip ${fmt(D.up.netWh+D.dn.netWh,1)} Wh.`;
+  else if(bothRegen&&S.regen) ln=`<b>Kedua leg regeneratif.</b> Naik kosong + turun terisi → gravitasi & counterweight bekerja; drive mengembalikan energi. Pola <b>termurah</b> (round-trip bisa negatif) — khas down-peak sore.`;
+  else if(!S.regen&&(bothRegen||(!D.up.motoring||!D.dn.motoring))) ln=`Tanpa regen drive, leg overhauling <b>tidak mengembalikan</b> energi (dibuang ke resistor) tetapi overhead per-stop tetap terbayar. "Turun gratis" hanya benar dengan regen drive.`;
+  else ln=`Pola klasik dua arah: naik motoring, turun regeneratif. Geser jumlah orang melewati titik seimbang ${fmt(balance,0)} kg (≈${Math.round(balance/S.w)} orang) untuk melihat mode berbalik.`;
+  $('legNote').innerHTML=ln;
+
+  drawShaft(D); drawLoadCurve(); drawDayBar(D);
+
+  const dNon=daily({regen:0}).totalKWh, dReg=daily({regen:1}).totalKWh;
+  const save=dNon-dReg, pct=dNon>0?save/dNon*100:0;
+  $('regenSave').textContent=fmt(save,1)+' kWh/hari';
+  $('regenNote').innerHTML=`Non-regen ${fmt(dNon,1)} vs regen ${fmt(dReg,1)} kWh/hari (−${fmt(pct,0)}%). ≈ ${rupiah(save*365*S.tar)}/tahun. Behind-the-meter self-consumption — bukan ekspor grid, di luar Permen ESDM 2/2024.`;
+
+  const stbShare=D.totalKWh>0?D.stbKWh/D.totalKWh*100:0;
+  $('mainNote').innerHTML=`<b>Standby = ${fmt(D.stbKWh,1)} kWh/hari (${fmt(stbShare,0)}% total).</b> ${stbShare>50?'Baseload standby mendominasi — untuk sizing PLTS/ESCO, fokus ke sini dulu (idle-mode, LED kabin, sleep controller) sebelum regen drive.':'Energi angkat mendominasi — regen drive + kurangi all-stops memberi penghematan terbesar; perhatikan pola up-peak yang membuat kedua leg motoring.'} Puncak ${fmt(D.peakKW,1)} kW = basis biaya demand (kVA), terpisah dari kWh.`;
+}
+
+function drawShaft(D){
+  const svg=$('shaft'),W=300,H=340,padT=8,padB=8,padL=54,padR=10;
+  const floors=S.N,avail=H-padT-padB,fh=avail/floors;
+  const load=S.nu*S.w, dm=load-S.k*S.Q, motoring=dm>0;
+  const liftG=motoring?Math.abs(dm)*g*S.h/S.eta/3600:0;
+  const liftR=(!motoring&&S.regen)?Math.abs(dm)*g*S.h*S.eta/3600:0;
+  const H2=S.ft*S.h,nStop=nStops(),segH=H2/nStop,vpk=Math.min(S.v,Math.sqrt(S.a*segH)),Ekin=0.5*S.M*vpk*vpk;
+  const dacc=vpk*vpk/(2*S.a);let tTrav=vpk<S.v?2*vpk/S.a:2*(S.v/S.a)+(segH-2*dacc)/S.v;
+  const stopOH=(Ekin/0.87+S.aux*(tTrav+S.dwell)+S.door*3600)/3600;
+  const stops=new Set();
+  if(S.stopMode==='all')for(let i=1;i<=S.ft;i++)stops.add(i);
+  else if(S.stopMode==='express')stops.add(S.ft);
+  else for(let j=1;j<=nStop;j++)stops.add(Math.round(j*S.ft/nStop));
+  let maxE=liftG+liftR+stopOH;if(maxE<=0)maxE=1;
+  const barMax=W-padL-padR-30;let el='';
+  el+=`<rect x="${padL-6}" y="${padT}" width="${W-padL-padR+6}" height="${avail}" fill="#f7f9fc" stroke="var(--line)" rx="4"/>`;
+  for(let f=floors;f>=1;f--){
+    const idx=floors-f,y=padT+idx*fh,traveled=f<=S.ft,isStop=stops.has(f);
+    let x=padL;
+    const seg=(wv,c)=>{if(wv<=0)return;const w=wv/maxE*barMax;el+=`<rect x="${x}" y="${y+fh*0.18}" width="${Math.max(w,0)}" height="${fh*0.64}" fill="${c}" rx="1.5"/>`;x+=w;};
+    if(traveled&&liftG<=0&&liftR<=0)el+=`<rect x="${padL}" y="${y+fh*0.42}" width="${barMax*0.12}" height="${fh*0.16}" fill="var(--line)" rx="1"/>`;
+    seg(traveled?liftG:0,'var(--amber)');
+    seg(isStop?stopOH:0,'var(--amber-d)');
+    seg(traveled?liftR:0,'var(--teal)');
+    const lbl=f===S.N?'Top':(f===1?'G+1':f);
+    el+=`<text x="${padL-12}" y="${y+fh/2+3.5}" text-anchor="end" font-family="var(--mono)" font-size="9" fill="${traveled?'var(--navy)':'var(--muted2)'}">${lbl}</text>`;
+    el+=`<line x1="${padL-6}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--line)" stroke-width="0.5"/>`;
+  }
+  svg.innerHTML=el;
+}
+
+function drawLoadCurve(){
+  // net Wh per leg vs number of people, for UP and DOWN
+  const svg=$('loadcurve'),W=360,H=220,pL=44,pR=12,pT=14,pB=32;
+  const maxN=parseInt($('nu').max);
+  const upv=[],dnv=[];
+  const saveNu=S.nu,saveNd=S.nd;
+  for(let n=0;n<=maxN;n++){upv.push({n,e:leg(n*S.w,'up').netWh});dnv.push({n,e:leg(n*S.w,'down').netWh});}
+  S.nu=saveNu;S.nd=saveNd;
+  const all=[...upv.map(p=>p.e),...dnv.map(p=>p.e)];
+  const maxY=Math.max(...all,1),minY=Math.min(...all,0);
+  const X=n=>pL+n/maxN*(W-pL-pR);
+  const Y=e=>pT+(1-(e-minY)/(maxY-minY))*(H-pT-pB);
+  let el='';
+  // zero line
+  el+=`<line x1="${pL}" y1="${Y(0)}" x2="${W-pR}" y2="${Y(0)}" stroke="var(--muted2)" stroke-width="1" stroke-dasharray="3 3"/>`;
+  el+=`<text x="${W-pR}" y="${Y(0)-4}" text-anchor="end" font-family="var(--mono)" font-size="8.5" fill="var(--muted)">0 · seimbang</text>`;
+  // balance point vertical
+  const nb=S.k*S.Q/S.w;
+  if(nb<=maxN)el+=`<line x1="${X(nb)}" y1="${pT}" x2="${X(nb)}" y2="${H-pB}" stroke="var(--line)" stroke-width="1"/>`;
+  const path=arr=>arr.map((p,i)=>(i?'L':'M')+X(p.n)+' '+Y(p.e)).join(' ');
+  el+=`<path d="${path(upv)}" fill="none" stroke="var(--amber)" stroke-width="2.5"/>`;
+  el+=`<path d="${path(dnv)}" fill="none" stroke="var(--navy)" stroke-width="2.5"/>`;
+  // current points
+  const cu=upv[Math.min(S.nu,maxN)],cd=dnv[Math.min(S.nd,maxN)];
+  el+=`<circle cx="${X(cu.n)}" cy="${Y(cu.e)}" r="5" fill="var(--amber)" stroke="#fff" stroke-width="2"/>`;
+  el+=`<circle cx="${X(cd.n)}" cy="${Y(cd.e)}" r="5" fill="var(--navy)" stroke="#fff" stroke-width="2"/>`;
+  // axis
+  el+=`<text x="${(W)/2}" y="${H-6}" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--muted)">jumlah orang →</text>`;
+  el+=`<text x="10" y="${pT-2}" font-family="var(--mono)" font-size="9" fill="var(--muted)">Wh/leg</text>`;
+  el+=`<text x="${X(cu.n)}" y="${Y(cu.e)-9}" text-anchor="middle" font-family="var(--mono)" font-size="9" font-weight="600" fill="var(--amber-d)">naik</text>`;
+  el+=`<text x="${X(cd.n)}" y="${Y(cd.e)+16}" text-anchor="middle" font-family="var(--mono)" font-size="9" font-weight="600" fill="var(--navy)">turun</text>`;
+  svg.innerHTML=el;
+}
+
+function drawDayBar(D){
+  const svg=$('daybar'),W=360,H=150,pL=10,pB=26,pT=14;
+  const dNon=daily({regen:0}).totalKWh,dReg=daily({regen:1}).totalKWh;
+  const run=Math.max(0,D.runKWh),stb=D.stbKWh,maxV=Math.max(dNon,dReg,run+stb,1)*1.12;
+  const bw=64,gap=46,x0=pL+30,scale=v=>(v/maxV)*(H-pT-pB);
+  let el='';
+  const bars=[{lab:'Running',parts:[[run,'var(--amber)']],x:x0},
+              {lab:'Standby',parts:[[stb,'var(--navy)']],x:x0+bw+gap},
+              {lab:'Total',parts:[[run,'var(--amber)'],[stb,'var(--navy)']],x:x0+2*(bw+gap)}];
+  bars.forEach(b=>{let y=H-pB;b.parts.forEach(([v,c])=>{const hh=scale(v);y-=hh;el+=`<rect x="${b.x}" y="${y}" width="${bw}" height="${hh}" fill="${c}"/>`;});
+    const tot=b.parts.reduce((s,p)=>s+p[0],0);
+    el+=`<text x="${b.x+bw/2}" y="${y-5}" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="600" fill="var(--ink)">${tot.toFixed(1)}</text>`;
+    el+=`<text x="${b.x+bw/2}" y="${H-8}" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">${b.lab}</text>`;});
+  el+=`<text x="${pL}" y="${pT-3}" font-family="var(--mono)" font-size="9" fill="var(--muted)">kWh/hari</text>`;
+  svg.innerHTML=el;
+}
+
+// labels + overload
+function maxPeople(){return Math.floor(S.Q/S.w);}
+function updateLabels(){
+  $('vw').textContent=S.w+' kg/org';
+  $('vnu').textContent=S.nu+' org';
+  $('vnd').textContent=S.nd+' org';
+  $('vQ').textContent=S.Q+' kg';$('vN').textContent=S.N;$('vh').textContent=S.h.toFixed(1)+' m';
+  $('vv').textContent=S.v.toFixed(1)+' m/s';$('va').textContent=S.a.toFixed(1)+' m/s²';
+  $('vM').textContent=S.M+' kg';$('vk').textContent=S.k.toFixed(2);$('veta').textContent=S.eta.toFixed(2);
+  $('vaux').textContent=S.aux+' W';$('vdoor').textContent=S.door.toFixed(2)+' Wh';
+  $('vdwell').textContent=S.dwell+' s';$('vstb').textContent=S.stb+' W';
+  $('vft').textContent=S.ft;$('vns').textContent=S.ns;$('vtd').textContent=S.td;
+  $('vtar').textContent='Rp '+S.tar.toLocaleString('id-ID')+'/kWh';
+  const mp=maxPeople();
+  $('olu').classList.toggle('show',S.nu*S.w>S.Q);
+  $('old').classList.toggle('show',S.nd*S.w>S.Q);
+  $('nu').max=Math.max(mp,S.nu);$('nd').max=Math.max(mp,S.nd);
+  const ftEl=$('ft');ftEl.max=S.N-1;if(S.ft>S.N-1){S.ft=S.N-1;ftEl.value=S.ft;$('vft').textContent=S.ft;}
+  $('ns').max=S.ft;if(S.ns>S.ft){S.ns=S.ft;$('ns').value=S.ns;$('vns').textContent=S.ns;}
+}
+function bindRange(id,key){$(id).addEventListener('input',e=>{S[key]=parseFloat(e.target.value);updateLabels();render();});}
+['w','nu','nd','Q','N','h','v','a','M','k','eta','aux','door','dwell','stb','ft','ns','td','tar'].forEach(k=>bindRange(k,k));
+
+document.querySelectorAll('#scenSeg button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#scenSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  const rated=Math.round(S.Q/75); const cap=maxPeople(); const full=Math.min(rated,cap);
+  const s=b.dataset.scen;
+  if(s==='uppeak'){S.nu=full;S.nd=0;}
+  else if(s==='downpeak'){S.nu=0;S.nd=full;}
+  else if(s==='twoway'){S.nu=Math.round(full/2);S.nd=Math.round(full/2);}
+  else if(s==='full'){S.nu=full;S.nd=full;}
+  $('nu').value=S.nu;$('nd').value=S.nd;updateLabels();render();
+}));
+document.querySelectorAll('#regenSeg button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#regenSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  S.regen=parseInt(b.dataset.regen);render();}));
+document.querySelectorAll('#stopSeg button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#stopSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  S.stopMode=b.dataset.stop;$('customStopWrap').style.display=S.stopMode==='custom'?'block':'none';render();}));
+
+updateLabels();render();
+</script>
+</body>
+</html>

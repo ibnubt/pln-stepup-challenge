@@ -1,0 +1,313 @@
+{
+  "B2": {
+    "count": 3,
+    "doors": [
+      "2.12-BASEMENT 2 IN",
+      "2.12-BASEMENT 2 OUT",
+      "3.76 Gd Utama Exit Barat B2"
+    ],
+    "liftLobby": [],
+    "stairExit": [
+      "3.76 Gd Utama Exit Barat B2"
+    ]
+  },
+  "B1": {
+    "count": 5,
+    "doors": [
+      "2.13 BASEMENT 1.1 IN",
+      "2.13 BASEMENT 1.1 OUT",
+      "2.14 BASEMENT 1.2 IN",
+      "2.14 BASEMENT 1.2 OUT",
+      "3.75 Gd Utama Exit Barat B1"
+    ],
+    "liftLobby": [],
+    "stairExit": [
+      "3.75 Gd Utama Exit Barat B1"
+    ]
+  },
+  "LT1": {
+    "count": 8,
+    "doors": [
+      "3.35 DIV PKP SELASAR GD 1 LT.1",
+      "3.39 GD 1 TEN LT 1",
+      "3.40 GD 1 CIRATA LT 1",
+      "3.41 GD 1 SAGULING LT 1",
+      "3.46 GD UTAMA PINTU K3L BELAKANG LT 1",
+      "3.48 GD 1 LOBBY TIMUR LT 1 IN",
+      "3.48 GD 1 LOBBY TIMUR LT 1 OUT",
+      "3.70 Gd Utama Lantai Dasar K3L"
+    ],
+    "liftLobby": [],
+    "stairExit": []
+  },
+  "LT2": {
+    "count": 10,
+    "doors": [
+      "3.42 GD Utama Pintu TCO Lt2",
+      "3.43 GD Utama Pintu DKM Lt2",
+      "3.44 GD Utama Pintu PBH Lt2",
+      "3.45 GD UTAMA PINTU SEKPER SPI LT 2",
+      "3.7 PINTU DEPAN SPKK LT. 2 IN",
+      "3.71 Dekom Gd 1 Lt 2",
+      "3.77 Gd Utama LT 2 P2IS Depan Utama",
+      "3.78 Gd Utama Lt 2 P2IS Samping 1",
+      "3.79 Gd Utama LT 2 P2IS Samping 2",
+      "3.80 GD Utama Pintu TCO Belakang LT2"
+    ],
+    "liftLobby": [],
+    "stairExit": []
+  },
+  "LT3": {
+    "count": 6,
+    "doors": [
+      "3.12 PINTU DEPAN SEKPER LT. 3 IN",
+      "3.2-SOC TRAPESIUM LT3 IN",
+      "3.2-SOC TRAPESIUM LT3 OUT",
+      "3.54 GD 1 Barat PIKK LT.3",
+      "3.58 GD 1 Timur SAD LT.3",
+      "3.63 Pantry trapesium Lt 3"
+    ],
+    "liftLobby": [],
+    "stairExit": []
+  },
+  "LT4": {
+    "count": 6,
+    "doors": [
+      "3.1-PECC TRAPESIUM LT4 IN",
+      "3.1-PECC TRAPESIUM LT4 OUT",
+      "3.56 GD 1 Barat Pajak LT.4",
+      "3.57 GD 1 Timuir YPK LT.4",
+      "3.59 GD Utama Lobby LT.4",
+      "3.81 Gd Utama LT 4 HCI"
+    ],
+    "liftLobby": [],
+    "stairExit": []
+  },
+  "LT5": {
+    "count": 5,
+    "doors": [
+      "3.38 GD RECAPITAL MDG LT 5",
+      "3.60 GD Utama Lobby LT.5",
+      "3.62 GD RECAPITAL KDSTI LT 5",
+      "3.65 GD 1 Lt 5 Digfor Barat",
+      "3.66 GD 1 Lt 5 Digfor Timur"
+    ],
+    "liftLobby": [],
+    "stairExit": []
+  },
+  "LT6": {
+    "count": 5,
+    "doors": [
+      "3.36 GD UTAMA LT.6 TIMUR",
+      "3.37 GD UTAMA LT.6 BARAT",
+      "3.49 GD 1 BARAT AKUNTANSI LT 6",
+      "3.50 GD 1 TIMUR AKUNTANSI LT 6",
+      "3.8 LOBBY LIFT LT 6 IN"
+    ],
+    "liftLobby": [
+      "3.8 LOBBY LIFT LT 6 IN"
+    ],
+    "stairExit": []
+  },
+  "LT7": {
+    "count": 3,
+    "doors": [
+      "3.53 GD 1 Barat MEP LT.7",
+      "3.55 GD 1 Timur MEP LT.7",
+      "3.61 GD Utama Lobby LT.7"
+    ],
+    "liftLobby": [],
+    "stairExit": []
+  },
+  "LT8": {
+    "count": 4,
+    "doors": [
+      "3.3 LOBBY LIFT LT 8 IN",
+      "3.51 GD 1 SDT HKK BARAT LT.8",
+      "3.52 GD 1 SDT HKK TIMUR LT.8",
+      "3.69 Gd 1 Lantai 8 SEVP HKK"
+    ],
+    "liftLobby": [
+      "3.3 LOBBY LIFT LT 8 IN"
+    ],
+    "stairExit": []
+  },
+  "LT9": {
+    "count": 1,
+    "doors": [
+      "3.4 LOBBY LIFT LT 9 IN"
+    ],
+    "liftLobby": [
+      "3.4 LOBBY LIFT LT 9 IN"
+    ],
+    "stairExit": []
+  },
+  "LT10": {
+    "count": 1,
+    "doors": [
+      "3.73 Gd Utama Lobby lt 10"
+    ],
+    "liftLobby": [],
+    "stairExit": []
+  },
+  "LT11": {
+    "count": 1,
+    "doors": [
+      "3.9 LOBBY LIFT LT 11 IN"
+    ],
+    "liftLobby": [
+      "3.9 LOBBY LIFT LT 11 IN"
+    ],
+    "stairExit": []
+  },
+  "LT12": {
+    "count": 1,
+    "doors": [
+      "3.74 Gd Utama Lobby lt 12"
+    ],
+    "liftLobby": [],
+    "stairExit": []
+  },
+  "LT13": {
+    "count": 1,
+    "doors": [
+      "3.47 GD UTAMA LOBBY LT 13"
+    ],
+    "liftLobby": [],
+    "stairExit": []
+  },
+  "LT14": {
+    "count": 17,
+    "doors": [
+      "3.10 LOBBY LIFT LT 14 IN",
+      "3.19 LOBBY LT.14 SISI BARAT",
+      "3.20 LOBBY LT.14 SISI TIMUR",
+      "3.21 EVP MEB SISI BARAT A LT.14",
+      "3.21 EVP ONLY MEB SISI BARAT A LT.14",
+      "3.22 EVP MEP SISI BARAT B LT.14",
+      "3.22 EVP ONLY MEP SISI BARAT B LT.14",
+      "3.23 EVP MPB SISI TIMUR A LT.14",
+      "3.23 EVP ONLY MPB SISI TIMUR A LT.14",
+      "3.24 EVP MPT SISI TIMUR B LT.14",
+      "3.24 EVP ONLY MPT SISI TIMUR B LT.14",
+      "3.25 EVP ONLY PPI SISI TIMUR C LT.14",
+      "3.25 EVP PPI SISI TIMUR C LT.14",
+      "3.30 PINTU EXIT BARAT LT.14 IN",
+      "3.30 PINTU EXIT BARAT LT.14 OUT",
+      "3.31 PINTU EXIT TIMUR LT.14 IN",
+      "3.31 PINTU EXIT TIMUR LT.14 OUT"
+    ],
+    "liftLobby": [
+      "3.10 LOBBY LIFT LT 14 IN"
+    ],
+    "stairExit": [
+      "3.30 PINTU EXIT BARAT LT.14 IN",
+      "3.30 PINTU EXIT BARAT LT.14 OUT",
+      "3.31 PINTU EXIT TIMUR LT.14 IN",
+      "3.31 PINTU EXIT TIMUR LT.14 OUT"
+    ]
+  },
+  "LT15": {
+    "count": 14,
+    "doors": [
+      "3.26 EVP MKJ SISI TIMUR B LT.15",
+      "3.26 EVP ONLY MKJ SISI TIMUR B LT.15",
+      "3.27 EVP MRP SISI TIMUR A LT.15",
+      "3.27 EVP ONLY MRP SISI TIMUR A LT.15",
+      "3.28 EVP MKS SISI BARAT A LT.15",
+      "3.28 EVP ONLY MKS SISI BARAT A LT.15",
+      "3.29 EVP ONLY PPP SISI BARAT B LT.15",
+      "3.29 EVP PPP SISI BARAT B LT.15",
+      "3.32 PINTU EXIT BARAT LT.15 IN",
+      "3.32 PINTU EXIT BARAT LT.15 OUT",
+      "3.33 PINTU EXIT TIMUR LT.15 IN",
+      "3.33 PINTU EXIT TIMUR LT.15 OUT",
+      "3.34 LOBBY LIFT LT 15 IN",
+      "3.72 EVP PMO Gd Utama lt 15"
+    ],
+    "liftLobby": [
+      "3.34 LOBBY LIFT LT 15 IN"
+    ],
+    "stairExit": [
+      "3.32 PINTU EXIT BARAT LT.15 IN",
+      "3.32 PINTU EXIT BARAT LT.15 OUT",
+      "3.33 PINTU EXIT TIMUR LT.15 IN",
+      "3.33 PINTU EXIT TIMUR LT.15 OUT"
+    ]
+  },
+  "PERIMETER": {
+    "count": 68,
+    "doors": [
+      "1.1-PEJALAN KAKI UTAMA A IN",
+      "1.1-PEJALAN KAKI UTAMA A IN ( QR )",
+      "1.1-PEJALAN KAKI UTAMA A OUT",
+      "1.1-PEJALAN KAKI UTAMA A OUT (QR)",
+      "1.1-PEJALAN KAKI UTAMA B IN",
+      "1.1-PEJALAN KAKI UTAMA B OUT",
+      "1.1-PEJALAN KAKI UTAMA C IN",
+      "1.1-PEJALAN KAKI UTAMA C OUT",
+      "2.1-PLAZA TERTUTUP A IN",
+      "2.1-PLAZA TERTUTUP A IN ( QR )",
+      "2.1-PLAZA TERTUTUP A OUT",
+      "2.1-PLAZA TERTUTUP A OUT ( QR )",
+      "2.1-PLAZA TERTUTUP B IN",
+      "2.1-PLAZA TERTUTUP B OUT",
+      "2.1-PLAZA TERTUTUP C IN",
+      "2.1-PLAZA TERTUTUP C OUT",
+      "2.1-PLAZA TERTUTUP D IN",
+      "2.1-PLAZA TERTUTUP D OUT",
+      "2.1-PLAZA TERTUTUP E IN",
+      "2.1-PLAZA TERTUTUP E OUT",
+      "2.1-PLAZA TERTUTUP F IN",
+      "2.1-PLAZA TERTUTUP F OUT",
+      "2.10 POSKOTIS",
+      "2.11 K3L BELAKANG IN",
+      "2.11 K3L BELAKANG OUT",
+      "2.15 TRANSIT RESTITUSI IN",
+      "2.15 TRANSIT RESTITUSI OUT",
+      "2.3-ATM BRI A IN",
+      "2.3-ATM BRI A OUT",
+      "2.3-ATM BRI B IN",
+      "2.3-ATM BRI B OUT",
+      "2.3-ATM BRI C IN",
+      "2.3-ATM BRI C OUT",
+      "2.4-SELASAR CSR A IN",
+      "2.4-SELASAR CSR A OUT",
+      "2.4-SELASAR CSR B IN",
+      "2.4-SELASAR CSR B OUT",
+      "2.4-SELASAR CSR C IN",
+      "2.4-SELASAR CSR C OUT",
+      "2.5-SELASAR MANDIRI A IN",
+      "2.5-SELASAR MANDIRI A OUT",
+      "2.5-SELASAR MANDIRI B IN",
+      "2.5-SELASAR MANDIRI B OUT",
+      "2.5-SELASAR MANDIRI C IN",
+      "2.5-SELASAR MANDIRI C OUT",
+      "2.6-MASJID A IN",
+      "2.6-MASJID A OUT",
+      "2.6-MASJID B IN",
+      "2.6-MASJID B OUT",
+      "2.6-MASJID C IN",
+      "2.6-MASJID C OUT",
+      "2.7-LOBBY DEKOM IN",
+      "2.7-LOBBY DEKOM OUT",
+      "2.8 TRAPESIUM A IN",
+      "2.8 TRAPESIUM A OUT",
+      "2.9-DIREKSI LOBBY IN",
+      "2.9-DIREKSI LOBBY OUT",
+      "2.9-TRAPESIUM B IN",
+      "2.9-TRAPESIUM B OUT",
+      "3.11 PINTU DEPAN DIVMUM IN",
+      "3.14 PINTU DEPAN LED AUD TIMUR",
+      "3.15 PINTU DEPAN LED AUD BARAT",
+      "3.16 SERVER FOH LED AUD",
+      "3.17 PINTU BELAKANG LED AUD BARAT",
+      "3.18 PINTU BELAKANG LED AUD TIMUR",
+      "3.5 PINTU K3L DEPAN IN",
+      "3.6 PINTU DEPAN YAN HC IN",
+      "3.64 Command Center"
+    ],
+    "liftLobby": [],
+    "stairExit": []
+  }
+}

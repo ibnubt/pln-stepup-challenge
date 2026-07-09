@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+.env*.local
+
+# Data operasional NYATA (PII pegawai / keamanan gedung) — tidak di-commit.
+# Tidak diperlukan untuk menjalankan app (app pakai data sintetis di src/data/).
+Transaction Report.csv
+Door Config Report.csv
