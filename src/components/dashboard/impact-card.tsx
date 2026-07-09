@@ -43,9 +43,9 @@ export function ImpactCard({ kpi }: { kpi: ScoreResult["kpi"] }) {
       metrics: [
         ["Listrik lift dihemat", `${fmt(kpi.energyKwhAvoided, 2)} kWh`],
         ["Energi per perjalanan lift", `${IMPACT.liftWhPerTrip} Wh`],
-        ["Faktor emisi (ESDM 2019)", `${IMPACT.gridEfKgPerKwh} kg/kWh`],
+        ["Faktor emisi grid (2025)", `${IMPACT.gridEfKgPerKwh} kg/kWh`],
       ],
-      note: `Energi ~${IMPACT.liftWhPerTrip} Wh/perjalanan — ACEEE/Sachs 2005 (Enermodal 2004): 1.900 kWh/th ÷ 100.000 trip ≈ 19 Wh (rentang 19–30). Faktor emisi ${IMPACT.gridEfKgPerKwh} = ESDM 2019 Jamali. Emisi = perjalanan × ${IMPACT.liftWhPerTrip} Wh → kWh × ${IMPACT.gridEfKgPerKwh}.`,
+      note: `Energi ~${IMPACT.liftWhPerTrip} Wh/perjalanan — ACEEE/Sachs 2005 (Enermodal 2004): 1.900 kWh/th ÷ 100.000 trip ≈ 19 Wh. Faktor emisi ${IMPACT.gridEfKgPerKwh} kg/kWh = proyeksi grid nasional 2025 (773 g/kWh). Emisi = perjalanan × ${IMPACT.liftWhPerTrip} Wh → kWh × ${IMPACT.gridEfKgPerKwh}.`,
       highlight: { icon: Car, text: `Setara ${fmt(carKm, 1)} km berkendara mobil` },
     },
     {

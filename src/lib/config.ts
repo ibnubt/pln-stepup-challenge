@@ -127,12 +127,25 @@ export const IMPACT = {
   liftEnergyRef: "ACEEE 2005 (Sachs)",
   liftWhPerTripNote: "≈19 Wh/perjalanan · ACEEE 2005",
   avgBodyWeightKg: 58, // rujukan Kemenkes AKG 2019 (rata2 L 60 / P 55 kg)
-  gridEfKgPerKwh: 0.87, // ESDM 2019 — grid Jamali, Combined Margin (kol.7). Alt OM=0,80
-  gridEfSource: "ESDM 2019 · grid Jamali (CM)",
+  gridEfKgPerKwh: 0.773, // proyeksi emisi grid nasional 2025 = 773 g/kWh
+  gridEfSource: "grid 2025 · 773 g/kWh",
   floorHeightM: 3.5, // tinggi antar-lantai (m) — untuk info beban
   // Kalori (per kg berat badan per lantai naik/turun):
   kcalPerKgFloorUp: 0.11,
   kcalPerKgFloorDown: 0.045,
+};
+
+/**
+ * Proyeksi faktor emisi grid (kg CO₂/kWh) — menurun s/d 2060.
+ * 2025 = 773 g/kWh · −6% (2030) · −37% (2040) · −75% (2050) · −100% (2060).
+ * Dipakai bila ingin proyeksi emisi antar-tahun.
+ */
+export const GRID_EF_TRAJECTORY: Record<number, number> = {
+  2025: 0.773,
+  2030: 0.727,
+  2040: 0.487,
+  2050: 0.193,
+  2060: 0.0,
 };
 
 /** Rujukan antropometri Kemenkes AKG 2019 (Permenkes No. 28/2019). */

@@ -292,7 +292,7 @@ Emisi   = Energi (kWh) × ${IMPACT.gridEfKgPerKwh} kg CO₂/kWh
         = ${fmt(k.liftRidesAvoided)} × ${IMPACT.liftWhPerTrip} Wh × ${IMPACT.gridEfKgPerKwh}
         = ${fmt(k.energyKwhAvoided, 2)} kWh → ${fmt(k.co2KgAvoided, 2)} kg CO₂`}</F>
           <Row k="20 Wh/perjalanan" v={<span>ACEEE (Sachs 2005): 1.900 kWh/th ÷ 100.000 trip ≈ 19 Wh</span>} />
-          <Row k={`${IMPACT.gridEfKgPerKwh} kg CO₂/kWh`} v="ESDM 2019 — grid Jamali (Combined Margin)" />
+          <Row k={`${IMPACT.gridEfKgPerKwh} kg CO₂/kWh`} v="proyeksi emisi grid nasional 2025 (773 g/kWh; turun s/d 2060)" />
 
           <div className="pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">C. Kalori</div>
           <F>{`Naik  : Σ (lantai × berat) × ${IMPACT.kcalPerKgFloorUp} kcal/kg/lantai = ${fmt(k.caloriesUp)} kcal
@@ -313,7 +313,7 @@ Total = ${fmt(k.calories)} kkal`}</F>
         {/* 8. Referensi */}
         <Section n="8" title="Referensi &amp; Sumber Resmi">
           <Row k="Energi lift (20 Wh/perjalanan)" v="ACEEE — Sachs, H. (2005), Opportunities for Elevator Energy Efficiency Improvements" />
-          <Row k="Faktor emisi (0,87 kg/kWh)" v="ESDM 2019 — Faktor Emisi GRK Sistem Ketenagalistrikan, grid Jamali (CM)" />
+          <Row k="Faktor emisi (0,773 kg/kWh)" v="proyeksi emisi grid nasional 2025 — 773 g/kWh (−6% 2030 · −37% 2040 · −75% 2050 · −100% 2060)" />
           <Row k="Berat/tinggi badan" v="Kemenkes AKG 2019 (Permenkes No. 28/2019)" />
           <Row k="Peta lantai gedung" v="Door Config Report (159 reader, B2–LT15)" />
           <Row k="Metode energi lift" v="ISO 25745-2:2015 (kerangka running + standby)" />

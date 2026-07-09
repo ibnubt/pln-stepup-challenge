@@ -50,7 +50,7 @@ export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
       sub: `${fmt(kpi.energyKwhAvoided, 2)} kWh listrik lift tak terpakai`,
       icon: Leaf,
       accent: "152 62% 40%",
-      tip: "ISO 25745-2: (perjalanan lift dihindari × ~20 Wh/perjalanan, lift 800 kg traksi) = energi (kWh), lalu × faktor emisi grid Jamali 0,87 kg CO₂/kWh (ESDM 2019, Combined Margin).",
+      tip: "(perjalanan lift dihindari × ~20 Wh/perjalanan, lift 800 kg traksi — ACEEE 2005) = energi (kWh), lalu × faktor emisi grid 0,773 kg CO₂/kWh (proyeksi grid nasional 2025).",
     },
     {
       label: "Kalori Terbakar",

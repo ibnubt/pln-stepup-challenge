@@ -55,7 +55,7 @@ Setiap metrik didokumentasikan di halaman **`/metodologi`** (tombol "Metodologi"
 
 Konstanta utama (di `config.ts` → `IMPACT`):
 - Energi lift **20 Wh/perjalanan** — ACEEE (Sachs 2005)
-- Faktor emisi **0,87 kg CO₂/kWh** — ESDM 2019, grid Jamali
+- Faktor emisi **0,773 kg CO₂/kWh** — proyeksi grid nasional 2025 (773 g/kWh)
 - Berat badan — Kemenkes AKG 2019 (L 60 / P 55 kg)
 - Poin: naik `lantai × 100 × koef`, turun `lantai × 50 × koef` (koefisien progresif per-trip)
 
