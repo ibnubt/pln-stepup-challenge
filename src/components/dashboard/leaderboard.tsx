@@ -255,7 +255,7 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
         </div>
       </Card>
 
-      <EmployeeDrawer stat={selected} onClose={() => setSelected(null)} />
+      <EmployeeDrawer key={selected?.emp.id ?? "none"} stat={selected} onClose={() => setSelected(null)} />
     </>
   );
 }

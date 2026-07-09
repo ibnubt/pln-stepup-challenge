@@ -39,6 +39,11 @@ export interface Employee {
   real: boolean;
 }
 
+export interface SessionStep {
+  lvl: string; // lantai
+  t: string; // waktu tap (HH:mm:ss)
+}
+
 export interface Session {
   emp: string;
   date: string; // YYYY-MM-DD
@@ -48,9 +53,11 @@ export interface Session {
   floors: number;
   startLevel: string;
   endLevel: string;
-  qualified: boolean; // melewati zona checkpoint LT1-4
+  checkpoint: boolean; // sesi ini melewati zona LT1-4 (dipakai deteksi check-in harian)
+  counted: boolean; // dapat poin (hari ini sudah check-in)
   koef: number;
   points: number;
+  steps: SessionStep[]; // jejak lantai per tap
 }
 
 const ms = (t: string) => new Date(t).getTime();
@@ -66,8 +73,8 @@ function groupBy<T>(arr: T[], key: (x: T) => string): Map<string, T[]> {
 }
 
 /** Rekonstruksi sesi tangga dari deretan tap (1 pegawai, sudah urut waktu). */
-function detectSessions(stairTaps: Tap[]): Omit<Session, "koef" | "points">[] {
-  const out: Omit<Session, "koef" | "points">[] = [];
+function detectSessions(stairTaps: Tap[]): Omit<Session, "koef" | "points" | "counted">[] {
+  const out: Omit<Session, "koef" | "points" | "counted">[] = [];
   let i = 0;
   while (i < stairTaps.length) {
     const run: Tap[] = [stairTaps[i]];
@@ -93,7 +100,7 @@ function detectSessions(stairTaps: Tap[]): Omit<Session, "koef" | "points">[] {
       const ei = levelIndex(endLevel);
       const lo = Math.min(si, ei);
       const hi = Math.max(si, ei);
-      const qualified = hi >= CHECKPOINT_MIN_IDX && lo <= CHECKPOINT_MAX_IDX;
+      const checkpoint = hi >= CHECKPOINT_MIN_IDX && lo <= CHECKPOINT_MAX_IDX;
       out.push({
         emp: run[0].e,
         date: dateKey(run[0].t),
@@ -103,7 +110,8 @@ function detectSessions(stairTaps: Tap[]): Omit<Session, "koef" | "points">[] {
         floors: run.length - 1,
         startLevel,
         endLevel,
-        qualified,
+        checkpoint,
+        steps: run.map((r) => ({ lvl: r.lvl, t: r.t.slice(11, 19) })),
       });
       i = j;
     } else {
@@ -113,25 +121,31 @@ function detectSessions(stairTaps: Tap[]): Omit<Session, "koef" | "points">[] {
   return out;
 }
 
-/** Terapkan koefisien PROGRESIF per-trip untuk sesi 1 pegawai dalam 1 hari. */
-function scoreDay(daySessions: Omit<Session, "koef" | "points">[]): Session[] {
+/**
+ * Skoring 1 pegawai dalam 1 hari.
+ * ATURAN CHECK-IN: pegawai harus tap checkpoint (lewat LT1-4) minimal sekali hari itu
+ * agar memenuhi syarat. Setelah check-in, SEMUA sesi tangga hari itu dapat poin
+ * (termasuk gerakan antar-lantai atas seperti LT7→LT9). Koefisien progresif per-trip.
+ */
+function scoreDay(daySessions: Omit<Session, "koef" | "points" | "counted">[]): Session[] {
   const sorted = [...daySessions].sort((a, b) => (a.time < b.time ? -1 : 1));
-  let cumUp = 0; // akumulasi lantai NAIK (hanya sesi qualified) hari itu
+  const checkedIn = sorted.some((s) => s.checkpoint); // sudah tap checkpoint LT1-4 hari ini?
+  let cumUp = 0; // akumulasi lantai NAIK hari itu
   const scored: Session[] = [];
   for (const s of sorted) {
-    if (!s.qualified) {
-      scored.push({ ...s, koef: 0, points: 0 });
+    if (!checkedIn) {
+      scored.push({ ...s, counted: false, koef: 0, points: 0 }); // belum check-in → tak dapat poin
       continue;
     }
     if (s.dir === "up") {
       const koef = koefFor(cumUp + s.floors);
       const points = s.floors * POINTS_UP_PER_FLOOR * koef;
       cumUp += s.floors;
-      scored.push({ ...s, koef, points: Math.round(points) });
+      scored.push({ ...s, counted: true, koef, points: Math.round(points) });
     } else {
       const koef = koefFor(cumUp);
       const points = s.floors * POINTS_DOWN_PER_FLOOR * koef;
-      scored.push({ ...s, koef, points: Math.round(points) });
+      scored.push({ ...s, counted: true, koef, points: Math.round(points) });
     }
   }
   return scored;
@@ -145,6 +159,7 @@ export interface DayStat {
   tier: Tier;
   stairTrips: number;
   liftTrips: number;
+  checkedIn: boolean; // sudah tap checkpoint LT1-4 hari itu
 }
 
 export interface EmployeeStat {
@@ -163,6 +178,7 @@ export interface EmployeeStat {
   longestStreak: number;
   tier: Tier; // berdasarkan rata2 lantai naik/hari
   days: DayStat[];
+  sessions: Session[]; // seluruh sesi (untuk detail + jejak lantai)
 }
 
 export interface HourStat {
@@ -248,7 +264,7 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
   const employeeStats: EmployeeStat[] = [];
   const sessByEmp = groupBy(allSessions, (s) => s.emp);
   for (const emp of employees) {
-    const sess = (sessByEmp.get(emp.id) ?? []).filter((s) => s.qualified);
+    const sess = (sessByEmp.get(emp.id) ?? []).filter((s) => s.counted);
     const byDay = groupBy(sess, (s) => s.date);
     const days: DayStat[] = [];
     for (const [date, ds] of byDay) {
@@ -263,6 +279,7 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
         tier: tierFor(up),
         stairTrips: ds.length,
         liftTrips: liftByEmpDay.get(`${emp.id}|${date}`) ?? 0,
+        checkedIn: true, // hari yang muncul di sini pasti sudah check-in
       });
     }
     days.sort((a, b) => (a.date < b.date ? -1 : 1));
@@ -290,6 +307,9 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
       longestStreak: longest,
       tier: levelFor(avgUp, activeDays),
       days,
+      sessions: (sessByEmp.get(emp.id) ?? [])
+        .slice()
+        .sort((a, b) => (a.time < b.time ? -1 : 1)),
     });
   }
   employeeStats.sort((a, b) => b.totalPoints - a.totalPoints);
@@ -297,7 +317,7 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
   // --- tren harian (org-wide) ---
   const dateMap = new Map<string, DayStat>();
   for (const s of allSessions) {
-    if (!s.qualified) continue;
+    if (!s.counted) continue;
     const d = dateMap.get(s.date) ?? {
       date: s.date,
       upFloors: 0,
@@ -306,6 +326,7 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
       tier: tierFor(0),
       stairTrips: 0,
       liftTrips: 0,
+      checkedIn: true,
     };
     if (s.dir === "up") d.upFloors += s.floors;
     else d.downFloors += s.floors;
@@ -332,7 +353,7 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
   // --- distribusi jam: trip tangga NAIK vs TURUN per jam ---
   const hourly = Array.from({ length: 24 }, (_, hour) => ({ hour, up: 0, down: 0 }));
   for (const s of allSessions) {
-    if (!s.qualified) continue;
+    if (!s.counted) continue;
     if (s.dir === "up") hourly[s.hour].up += 1;
     else hourly[s.hour].down += 1;
   }
@@ -347,7 +368,7 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
     stairTrips: 0,
   }));
   for (const s of allSessions) {
-    if (!s.qualified || s.date !== today) continue;
+    if (!s.counted || s.date !== today) continue;
     const b = todayHourly[s.hour];
     b.points += s.points;
     if (s.dir === "up") b.upFloors += s.floors;
@@ -357,29 +378,29 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
 
   // --- KPI + dampak (berbobot berat badan tiap pegawai) ---
   const bwOf = (id: string) => empById.get(id)?.weight ?? IMPACT.avgBodyWeightKg;
-  const qualified = allSessions.filter((s) => s.qualified);
-  const qualUp = qualified.filter((s) => s.dir === "up");
+  const counted = allSessions.filter((s) => s.counted);
+  const qualUp = counted.filter((s) => s.dir === "up");
   const upFloors = qualUp.reduce((a, s) => a + s.floors, 0);
-  const downFloors = qualified
+  const downFloors = counted
     .filter((s) => s.dir === "down")
     .reduce((a, s) => a + s.floors, 0);
 
   let loadKgFloor = 0;
   let calUp = 0;
   let calDn = 0;
-  for (const s of qualified) {
+  for (const s of counted) {
     const bw = bwOf(s.emp);
     loadKgFloor += s.floors * bw; // beban fisik dipindah (ton·lantai) — info
     if (s.dir === "up") calUp += s.floors * bw * IMPACT.kcalPerKgFloorUp;
     else calDn += s.floors * bw * IMPACT.kcalPerKgFloorDown;
   }
   // Emisi (ISO 25745-2): tiap sesi tangga = 1 perjalanan lift dihindari
-  const liftTripsAvoided = qualified.length;
+  const liftTripsAvoided = counted.length;
   const energyKwh = (liftTripsAvoided * IMPACT.liftWhPerTrip) / 1000;
   const co2Kg = energyKwh * IMPACT.gridEfKgPerKwh;
 
   const totalPoints = employeeStats.reduce((a, e) => a + e.totalPoints, 0);
-  const stairTrips = qualified.length;
+  const stairTrips = counted.length;
   const liftTrips = liftTaps.length;
   const activeEmployees = employeeStats.filter((e) => e.activeDays > 0).length;
 

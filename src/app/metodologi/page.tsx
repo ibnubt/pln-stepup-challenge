@@ -113,7 +113,7 @@ export default function MetodologiPage() {
             <div className="mt-3">
               <F>{`RAW TAP (taps.json)
    → [1] Deteksi sesi tangga (rangkai tap berurutan)
-   → [2] Validasi checkpoint LT1–LT4 (buang sesi tak valid)
+   → [2] Cek check-in harian (tap LT1–4) → tentukan hari berpoin
    → [3] Skoring poin (koefisien progresif per-trip)
    → [4] Agregasi per pegawai / per hari / org
    → [5] KPI + Dampak (energi, emisi, kalori)`}</F>
@@ -156,9 +156,11 @@ export default function MetodologiPage() {
           <F>{`jumlah lantai (sesi) = jumlah tap − 1
 Jeda > ${SEC_PER_FLOOR_MAX} detik  →  sesi PUTUS, mulai sesi baru`}</F>
           <p>
-            <b className="text-foreground">Sesi VALID</b> = sesi yang melewati zona checkpoint{" "}
-            <b className="text-pln-gold">{CHECKPOINT_ZONE.join("–")}</b>. Sesi yang tidak menyentuh zona ini (mis.
-            LT12→LT8) <b className="text-foreground">tidak dihitung</b> — anti-curang terhadap pemakaian lift.
+            <b className="text-foreground">Aturan check-in:</b> pegawai wajib{" "}
+            <b className="text-pln-gold">tap checkpoint {CHECKPOINT_ZONE.join("-")}</b> minimal sekali (biasanya saat
+            datang pagi). <b className="text-foreground">Setelah check-in, SEMUA sesi tangga hari itu dapat poin</b> —
+            termasuk gerakan antar-lantai atas (mis. LT7→LT9), tanpa harus lewat LT1-4 lagi. Hari{" "}
+            <b className="text-foreground">tanpa check-in → tidak ada poin</b>.
           </p>
         </Section>
 
@@ -258,7 +260,7 @@ TURUN m lantai → koef = tier(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR} × 
               </tr>
               <tr className="border-b border-border/50">
                 <td className="py-1.5 pr-2">Lift Dihindari</td>
-                <td className="py-1.5 pr-2 text-muted-foreground">jumlah sesi tangga valid <span className="text-[hsl(var(--warning))]">(per-sesi, batas atas)</span></td>
+                <td className="py-1.5 pr-2 text-muted-foreground">jumlah sesi tangga berpoin (hari check-in) <span className="text-[hsl(var(--warning))]">(per-sesi, batas atas)</span></td>
                 <td className="tabular py-1.5 text-right">{fmt(k.liftRidesAvoided)}</td>
               </tr>
               <tr className="border-b border-border/50">
@@ -278,7 +280,7 @@ TURUN m lantai → koef = tier(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR} × 
         {/* 6. Dampak */}
         <Section n="6" title="Dampak Program — Lift · Emisi · Kalori" sub="Rincian rumus + sumber tiap angka.">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">A. Lift Dihindari</div>
-          <F>{`Lift Dihindari = jumlah sesi tangga valid (naik + turun) = ${fmt(k.liftRidesAvoided)}`}</F>
+          <F>{`Lift Dihindari = jumlah sesi tangga berpoin, naik+turun (hari check-in) = ${fmt(k.liftRidesAvoided)}`}</F>
           <p className="text-[11px]">
             ⚠️ Asumsi <b className="text-foreground">1 sesi = 1 perjalanan lift</b> (okupansi belum dikoreksi → batas
             atas). Koreksi lanjutan = bagi okupansi (orang per perjalanan lift).

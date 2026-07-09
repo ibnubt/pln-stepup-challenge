@@ -53,10 +53,10 @@ const UNITS = [
   "SDT", "PMO", "CIRATA", "SAGULING", "TCO", "DKM", "PBH", "SAD", "YPK", "DIGFOR",
 ];
 const PERSONAS = {
-  champion: { stair: 0.92, attend: 0.96, extra: 0.65, label: "Champion" },
-  regular: { stair: 0.6, attend: 0.93, extra: 0.42, label: "Regular" },
-  occasional: { stair: 0.34, attend: 0.9, extra: 0.28, label: "Occasional" },
-  rare: { stair: 0.12, attend: 0.89, extra: 0.15, label: "Rare" },
+  champion: { stair: 0.92, attend: 0.96, maxActs: 6, label: "Champion" },
+  regular: { stair: 0.6, attend: 0.93, maxActs: 5, label: "Regular" },
+  occasional: { stair: 0.34, attend: 0.9, maxActs: 4, label: "Occasional" },
+  rare: { stair: 0.12, attend: 0.89, maxActs: 3, label: "Rare" },
 };
 // distribusi: 5 champion, 9 regular, 9 occasional, 7 rare (+ FAISAL sbg regular) = 30
 const PERSONA_PLAN = [
@@ -175,59 +175,81 @@ function move(emp, a, b, startMs) {
   return startMs + (floors * 4 + rndInt(15, 40)) * 1000;
 }
 
-// ---- Simulasi harian ----
+/** Pindah `from`→`to` dengan menghormati basement (lift TAK melayani basement). */
+function goTo(emp, from, to, startMs) {
+  if (from === to) return startMs;
+  const gi = idx(GROUND);
+  const fromBase = idx(from) < gi;
+  const toBase = idx(to) < gi;
+  if (fromBase === toBase) return move(emp, from, to, startMs); // sisi sama
+  if (fromBase) {
+    // basement → atas: kalau tangga penuh langsung; kalau tidak, tangga ke LT1 lalu lift
+    if (useStairs(emp, from, to)) return stairSession(emp, from, to, startMs);
+    const a = stairSession(emp, from, GROUND, startMs);
+    return move(emp, GROUND, to, a + rndInt(20, 60) * 1000);
+  }
+  // atas → basement
+  if (useStairs(emp, from, to)) return stairSession(emp, from, to, startMs);
+  const a = move(emp, from, GROUND, startMs);
+  return stairSession(emp, GROUND, to, a + rndInt(20, 60) * 1000);
+}
+
+/** Lantai kunjungan/rapat acak (LT2..LT15), selain lantai sekarang. */
+function randomFloor(exclude) {
+  let f;
+  do {
+    f = "LT" + rndInt(2, 15);
+  } while (f === exclude);
+  return f;
+}
+
+const H = (h, m = 0) => (h * 60 + m) * 60 * 1000; // helper jam→ms
+
+// ---- Simulasi harian (acak & bervariasi) ----
 for (let d = new Date(START); d <= END; d.setDate(d.getDate() + 1)) {
   const dow = d.getDay(); // 0=Min,6=Sab
   const weekend = dow === 0 || dow === 6;
   for (const emp of employees) {
     const P = PERSONAS[emp.persona];
-    const attendP = weekend ? 0.08 : P.attend;
-    if (!chance(attendP)) continue;
+    if (!chance(weekend ? 0.08 : P.attend)) continue;
 
-    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
     const office = emp.office;
+    const home = emp.basement || GROUND;
+    let cur = home;
 
-    // Datang pagi: (basement →) LT1 → office
-    let ms = day.getTime() + (rndInt(6, 8) * 60 + rndInt(30, 59)) * 60 * 1000;
-    if (emp.basement) {
-      if (useStairs(emp, emp.basement, office)) {
-        stairSession(emp, emp.basement, office, ms); // tangga sampai atas
-      } else {
-        const after = stairSession(emp, emp.basement, GROUND, ms); // wajib naik dari basement
-        move(emp, GROUND, office, after + rndInt(20, 60) * 1000);
+    // 1) Datang pagi → kantor
+    let t = day + H(rndInt(6, 8), rndInt(30, 59));
+    t = goTo(emp, cur, office, t);
+    cur = office;
+
+    // 2) Aktivitas siang: rangkaian tujuan ACAK (0..maxActs)
+    //    campuran — turun ke lantai dasar (makan/ATM/masjid), ke basement (mobil),
+    //    atau rapat/kunjungan di lantai atas acak (mis. LT7→LT9 → di luar checkpoint).
+    const nActs = rndInt(0, P.maxActs);
+    let clock = day + H(10, rndInt(0, 40));
+    for (let a = 0; a < nActs; a++) {
+      clock += rndInt(25, 110) * 60 * 1000;
+      if (clock > day + H(16, 30)) break; // jangan lewat jam pulang
+      t = Math.max(t, clock);
+      const r = rand();
+      let dest;
+      if (r < 0.35) dest = GROUND; // fasilitas lantai dasar → lewat checkpoint
+      else if (r < 0.5 && emp.basement) dest = emp.basement; // ke mobil sebentar
+      else dest = randomFloor(cur); // rapat lantai acak → sering di luar checkpoint
+      t = goTo(emp, cur, dest, t);
+      cur = dest;
+      // sering balik ke kantor setelah aktivitas
+      if (dest !== office && chance(0.6)) {
+        t += rndInt(15, 60) * 60 * 1000;
+        t = goTo(emp, cur, office, t);
+        cur = office;
       }
-    } else {
-      move(emp, GROUND, office, ms);
     }
 
-    // Jam makan siang: office -> LT1 -> office (p tergantung persona)
-    if (chance(0.72)) {
-      let lunch = day.getTime() + (11 * 60 + rndInt(30, 90)) * 60 * 1000;
-      const after = move(emp, office, GROUND, lunch);
-      const back = after + rndInt(35, 70) * 60 * 1000;
-      move(emp, GROUND, office, back);
-    }
-
-    // Trip ekstra mid-day (rapat antar lantai)
-    if (chance(P.extra)) {
-      const other = OFFICE_POOL[rndInt(0, OFFICE_POOL.length - 1)];
-      let t = day.getTime() + (rndInt(9, 15) * 60 + rndInt(0, 59)) * 60 * 1000;
-      const a2 = move(emp, office, other, t);
-      move(emp, other, office, a2 + rndInt(20, 50) * 60 * 1000);
-    }
-
-    // Pulang sore: office → LT1 (→ basement)
-    let out = day.getTime() + (rndInt(16, 19) * 60 + rndInt(0, 59)) * 60 * 1000;
-    if (emp.basement) {
-      if (useStairs(emp, office, emp.basement)) {
-        stairSession(emp, office, emp.basement, out);
-      } else {
-        const after = move(emp, office, GROUND, out);
-        stairSession(emp, GROUND, emp.basement, after + rndInt(20, 60) * 1000);
-      }
-    } else {
-      move(emp, office, GROUND, out);
-    }
+    // 3) Pulang sore: dari posisi terakhir → home
+    const out = Math.max(t + rndInt(10, 40) * 60 * 1000, day + H(rndInt(16, 19), rndInt(0, 59)));
+    goTo(emp, cur, home, out);
   }
 }
 

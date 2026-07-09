@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis } from "recharts";
-import type { EmployeeStat } from "@/lib/scoring";
+import type { EmployeeStat, Session, DayStat } from "@/lib/scoring";
 import { TierBadge } from "@/components/ui/badge";
 import { tierFor, PERSONA_LABEL, PERSONA_DESC } from "@/lib/config";
 import { cn, fmt } from "@/lib/utils";
@@ -15,9 +15,107 @@ import {
   Trophy,
   Footprints,
   Gauge,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 
+// —— satu baris sesi: collapsible, tampilkan waktu mulai–selesai ——
+function SessionRow({ s }: { s: Session }) {
+  const [open, setOpen] = useState(false);
+  const up = s.dir === "up";
+  const start = s.steps[0]?.t.slice(0, 5) ?? s.time.slice(11, 16);
+  const end = s.steps[s.steps.length - 1]?.t.slice(0, 5) ?? start;
+  return (
+    <div
+      className={cn(
+        "overflow-hidden rounded-lg border",
+        s.counted ? "border-border/70" : "border-dashed border-border/50 opacity-60"
+      )}
+    >
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-2 px-2.5 py-2 text-left text-[11px] transition-colors hover:bg-muted/40"
+      >
+        <ChevronRight className={cn("h-3 w-3 shrink-0 text-muted-foreground transition-transform", open && "rotate-90")} />
+        <span className="tabular shrink-0 whitespace-nowrap text-muted-foreground">{start}–{end}</span>
+        <span className={cn("inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap font-medium", up ? "text-[hsl(var(--success))]" : "text-primary")}>
+          {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+          {s.startLevel}→{s.endLevel}
+        </span>
+        {s.checkpoint && (
+          <span className="shrink-0 whitespace-nowrap rounded-sm bg-pln-yellow/20 px-1 text-[8px] font-bold uppercase leading-normal text-pln-gold" title="tap checkpoint LT1-4">
+            check-in
+          </span>
+        )}
+        <span className="tabular shrink-0 whitespace-nowrap text-muted-foreground">{s.floors} lt</span>
+        <span className="tabular ml-auto shrink-0 text-right text-[10px]">
+          {s.counted ? (
+            <span className="font-semibold text-foreground">
+              {fmt(s.points)} <span className="font-normal text-muted-foreground">poin ×{s.koef.toFixed(1)}</span>
+            </span>
+          ) : (
+            <span className="rounded bg-muted px-1 py-0.5 text-muted-foreground">tanpa check-in</span>
+          )}
+        </span>
+      </button>
+      {open && (
+        <div className="border-t border-border/50 px-2.5 py-2">
+          <div className="mb-1.5 flex items-center justify-between text-[9px] text-muted-foreground">
+            <span>Jejak lantai ({s.steps.length} tap)</span>
+            <span className="tabular">mulai {s.steps[0]?.t} · selesai {s.steps[s.steps.length - 1]?.t}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-y-1 text-[9px]">
+            {s.steps.map((st, j) => (
+              <span key={j} className="inline-flex items-center">
+                {j > 0 && <span className="mx-0.5 text-muted-foreground/50">→</span>}
+                <span className="tabular rounded bg-muted px-1 py-0.5 text-foreground" title={st.t}>
+                  {st.lvl}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// —— grup satu tanggal: collapsible ——
+function DayGroup({ date, sessions, day }: { date: string; sessions: Session[]; day?: DayStat }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="overflow-hidden rounded-lg border border-border/60">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-2 px-2.5 py-2 text-left text-[10px] transition-colors hover:bg-muted/40"
+      >
+        <ChevronRight className={cn("h-3 w-3 shrink-0 text-muted-foreground transition-transform", open && "rotate-90")} />
+        <span className="tabular font-semibold text-foreground">{dayLabel(date)}</span>
+        {day ? (
+          <TierBadge tier={day.tier} />
+        ) : (
+          <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">tanpa check-in</span>
+        )}
+        <span className="tabular ml-auto text-muted-foreground">
+          {sessions.length} sesi · ↑{day?.upFloors ?? 0} ↓{day?.downFloors ?? 0} lt · {fmt(day?.points ?? 0)} poin
+        </span>
+      </button>
+      {open && (
+        <div className="space-y-1.5 border-t border-border/50 bg-muted/10 p-2">
+          {[...sessions].reverse().map((s, i) => (
+            <SessionRow key={i} s={s} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const dayLabel = (d: string) => {
+  const [, m, day] = d.split("-");
+  return `${Number(day)} ${MONTHS[Number(m) - 1]}`;
+};
 const shortDate = (d: string) => {
   const [, m, day] = d.split("-");
   return `${day}/${m}`;
@@ -68,6 +166,7 @@ export function EmployeeDrawer({
   stat: EmployeeStat | null;
   onClose: () => void;
 }) {
+  const [dayPage, setDayPage] = useState(1);
   useEffect(() => {
     const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", h);
@@ -78,6 +177,22 @@ export function EmployeeDrawer({
   const e = stat.emp;
   const initials = e.name.replace(/—.*/, "").trim().split(" ").slice(0, 2).map((w) => w[0]).join("");
   const bestDay = Math.max(1, ...stat.days.map((d) => d.points));
+
+  // kelompokkan sesi per hari (terbaru dulu)
+  const dayMap = new Map(stat.days.map((d) => [d.date, d]));
+  const sessByDay = new Map<string, Session[]>();
+  for (const s of stat.sessions) {
+    const arr = sessByDay.get(s.date) ?? [];
+    arr.push(s);
+    sessByDay.set(s.date, arr);
+  }
+  const dayEntries = [...sessByDay.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+
+  // paging grup hari (data bisa banyak)
+  const DAYS_PER_PAGE = 5;
+  const totalDayPages = Math.max(1, Math.ceil(dayEntries.length / DAYS_PER_PAGE));
+  const safeDayPage = Math.min(dayPage, totalDayPages);
+  const pagedDays = dayEntries.slice((safeDayPage - 1) * DAYS_PER_PAGE, safeDayPage * DAYS_PER_PAGE);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -163,24 +278,46 @@ export function EmployeeDrawer({
           </div>
 
           <div className="mt-5">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Riwayat Terakhir
-            </span>
-            <div className="mt-2 space-y-1">
-              {[...stat.days].reverse().slice(0, 6).map((d) => (
-                <div key={d.date} className="flex items-center gap-2 rounded-md border border-border/60 px-2.5 py-1.5 text-[11px]">
-                  <span className="tabular w-12 text-muted-foreground">{shortDate(d.date)}</span>
-                  <TierBadge tier={d.tier} />
-                  <span className="tabular text-[10px] text-muted-foreground" title="koefisien harian">
-                    ×{d.tier.koef.toFixed(1)}
-                  </span>
-                  <span className="tabular ml-auto text-muted-foreground">
-                    ↑{d.upFloors} · ↓{d.downFloors} lt
-                  </span>
-                  <span className="tabular w-16 text-right font-semibold text-foreground">{fmt(d.points)}</span>
-                </div>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Riwayat Sesi &amp; Jejak Lantai
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {dayEntries.length} hari · {stat.sessions.length} sesi
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {pagedDays.map(([date, sessions]) => (
+                <DayGroup key={date} date={date} sessions={sessions} day={dayMap.get(date)} />
               ))}
             </div>
+
+            {/* paging grup hari */}
+            {totalDayPages > 1 && (
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground">
+                  Hal {safeDayPage}/{totalDayPages}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setDayPage((p) => Math.max(1, p - 1))}
+                    disabled={safeDayPage <= 1}
+                    className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    Prev
+                  </button>
+                  <button
+                    onClick={() => setDayPage((p) => Math.min(totalDayPages, p + 1))}
+                    disabled={safeDayPage >= totalDayPages}
+                    className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

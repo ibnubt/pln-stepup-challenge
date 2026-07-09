@@ -37,8 +37,9 @@ export function SchemeCard() {
           <Info className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
           <span>
             <b className="text-foreground">Koefisien progresif per-trip</b>: makin banyak lantai naik
-            terkumpul dalam sehari, makin tinggi pengali trip berikutnya. Sesi hanya dihitung bila
-            melewati <b className="text-pln-gold">checkpoint LT1–LT4</b>.
+            terkumpul dalam sehari, makin tinggi pengali trip berikutnya. Wajib{" "}
+            <b className="text-pln-gold">check-in (tap LT1–LT4)</b> sekali saat datang; setelah itu
+            semua sesi tangga hari itu dapat poin.
           </span>
         </p>
 
