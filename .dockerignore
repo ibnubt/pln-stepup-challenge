@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.gitignore
+.github
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.md
+.DS_Store
+npm-debug.log*
+.vscode
+.idea
+# data operasional nyata (tak ikut image)
+Transaction Report.csv
+Door Config Report.csv

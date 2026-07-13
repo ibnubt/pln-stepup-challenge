@@ -1,0 +1,11 @@
+services:
+  web:
+    build: .
+    image: pln-wellness
+    container_name: pln-wellness
+    ports:
+      - "3000:3000" # ubah ke "8080:3000" dst bila port host bentrok
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    restart: unless-stopped

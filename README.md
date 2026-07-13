@@ -26,6 +26,34 @@ npm run start          # PORT=3200 npm run start  (ganti port bila 3000 terpakai
 
 ---
 
+## Docker (deploy di server)
+
+Image Next.js **standalone** — kecil (~230 MB), tanpa database.
+
+```bash
+git clone https://github.com/ibnubt/pln-stepup-challenge.git
+cd pln-stepup-challenge
+
+# Opsi A — docker compose (paling gampang)
+docker compose up -d --build          # → http://SERVER:3000
+
+# Opsi B — docker manual
+docker build -t pln-wellness .
+docker run -d -p 3000:3000 --name pln-wellness --restart unless-stopped pln-wellness
+```
+
+Ganti port host bila 3000 terpakai: `-p 8080:3000` (atau edit `docker-compose.yml`).
+
+```bash
+docker logs -f pln-wellness      # lihat log
+docker compose down              # stop (compose)
+docker rm -f pln-wellness        # stop (manual)
+```
+
+Update versi baru: `git pull && docker compose up -d --build`.
+
+---
+
 ## Data
 
 App berjalan **mandiri** dari data sintetis di `src/data/` (`taps.json`, `employees.json`, `doors-by-floor.json`) — tidak butuh database untuk jalan.
