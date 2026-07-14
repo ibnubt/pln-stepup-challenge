@@ -47,7 +47,7 @@ SELECT DISTINCT ON (COALESCE(NULLIF(TRIM(r.extsysid),''), r.cardno::text))
   TRUE                                                    AS is_real
 FROM rpt_trx r
 JOIN stair_reader sr ON sr.sourcename = r.sourcename
-WHERE r.cardno IS NOT NULL AND r.evtypename = 'Valid Credential'
+WHERE r.cardno IS NOT NULL AND r.evtypename IN ('Valid Credential','Invalid Credential')
 ORDER BY COALESCE(NULLIF(TRIM(r.extsysid),''), r.cardno::text), r.trxdate DESC;
 
 -- ---- 4. Event tap tangga → taps ----
@@ -61,7 +61,7 @@ SELECT
 FROM rpt_trx r
 JOIN stair_reader sr ON sr.sourcename = r.sourcename       -- index sourcename → cepat
 WHERE r.cardno IS NOT NULL
-  AND r.evtypename = 'Valid Credential'                    -- tap sah (Local Grant)
+  AND r.evtypename IN ('Valid Credential','Invalid Credential')  -- +Invalid: pemakai tangga kartu belum di-enroll
   -- opsional batasi rentang (bulan berjalan):
   -- AND r.trxdate >= extract(epoch FROM date_trunc('month', now()))::bigint
 ;

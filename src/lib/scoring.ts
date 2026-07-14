@@ -264,7 +264,11 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
   const employeeStats: EmployeeStat[] = [];
   const sessByEmp = groupBy(allSessions, (s) => s.emp);
   for (const emp of employees) {
-    const sess = (sessByEmp.get(emp.id) ?? []).filter((s) => s.counted);
+    const allEmpSess = sessByEmp.get(emp.id) ?? [];
+    // Pegawai tanpa satu pun sesi tangga (mis. tap tunggal yg tak jadi perjalanan)
+    // → JANGAN tampilkan baris kosong. Baris muncul begitu ada sesi nyata.
+    if (allEmpSess.length === 0) continue;
+    const sess = allEmpSess.filter((s) => s.counted);
     const byDay = groupBy(sess, (s) => s.date);
     const days: DayStat[] = [];
     for (const [date, ds] of byDay) {
@@ -307,9 +311,7 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
       longestStreak: longest,
       tier: levelFor(avgUp, activeDays),
       days,
-      sessions: (sessByEmp.get(emp.id) ?? [])
-        .slice()
-        .sort((a, b) => (a.time < b.time ? -1 : 1)),
+      sessions: allEmpSess.slice().sort((a, b) => (a.time < b.time ? -1 : 1)),
     });
   }
   employeeStats.sort((a, b) => b.totalPoints - a.totalPoints);
@@ -414,8 +416,8 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
     hourly,
     kpi: {
       activeEmployees,
-      totalEmployees: employees.length,
-      participation: employees.length ? activeEmployees / employees.length : 0,
+      totalEmployees: employeeStats.length, // hanya pegawai dgn sesi nyata (tanpa baris kosong)
+      participation: employeeStats.length ? activeEmployees / employeeStats.length : 0,
       upFloors,
       downFloors,
       totalPoints,

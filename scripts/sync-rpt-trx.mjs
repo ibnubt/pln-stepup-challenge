@@ -7,6 +7,7 @@
 //   SOURCE_PGSSL=true     SSL ke sumber
 //   SYNC_INTERVAL=30      detik antar sync (loop). SYNC_ONCE=1 → sekali saja.
 //   SYNC_BACKFILL_DAYS=35 batas backfill saat pertama (agar tak tarik tahunan)
+//   SYNC_VALID_ONLY=1     hanya ambil tap 'Valid Credential' (default: +Invalid, fase enroll)
 // ============================================================================
 import pg from "pg";
 
@@ -17,6 +18,14 @@ const INTERVAL = Math.max(2, Number(process.env.SYNC_INTERVAL || 30)) * 1000;
 const BACKFILL_DAYS = Number(process.env.SYNC_BACKFILL_DAYS || 35);
 const ONCE = process.env.SYNC_ONCE === "1";
 const WIB = 7 * 3600; // trxdate = epoch UTC + 7 jam (ber-WIB)
+
+// Event tap yang dihitung sebagai "orang naik tangga".
+// Fase enrollment: pemakai tangga yg kartunya BELUM di-authorize ter-log sebagai
+// 'Invalid Credential' (mis. PRAYOGA) — mereka tetap fisik naik tangga, jadi ikut.
+// Set SYNC_VALID_ONLY=1 setelah semua kartu di-enroll agar hanya tap sah yang diambil.
+const EVTYPES = process.env.SYNC_VALID_ONLY === "1"
+  ? ["Valid Credential"]
+  : ["Valid Credential", "Invalid Credential"];
 
 const log = (...a) => console.log(new Date().toISOString(), "[sync]", ...a);
 
@@ -38,11 +47,11 @@ async function syncOnce(dst, src) {
   const res = await src.query(
     `SELECT trxdate, extsysid, sourcename, fname, lname, cardno, identitydepartment
        FROM rpt_trx
-      WHERE sourcename = ANY($1) AND evtypename = 'Valid Credential'
+      WHERE sourcename = ANY($1) AND evtypename = ANY($3)
         AND cardno IS NOT NULL AND trxdate >= $2
       ORDER BY trxdate
       LIMIT 5000`,
-    [names, from]
+    [names, from, EVTYPES]
   );
   if (!res.rows.length) return;
 
@@ -118,6 +127,6 @@ async function tick() {
   }
 }
 
-log(`start · interval=${INTERVAL / 1000}s · backfill=${BACKFILL_DAYS}d · once=${ONCE}`);
+log(`start · interval=${INTERVAL / 1000}s · backfill=${BACKFILL_DAYS}d · once=${ONCE} · evtypes=[${EVTYPES.join(", ")}]`);
 await tick();
 if (!ONCE) setInterval(tick, INTERVAL);

@@ -9,7 +9,7 @@ import { computeScores, type Tap, type Employee } from "./scoring";
 // Cache: JSON di-cache selamanya (statis); mode DB pakai TTL pendek agar
 // dashboard ikut update saat worker sync menambah tap baru (near-realtime).
 const IS_DB = process.env.DATA_SOURCE === "db";
-const TTL_MS = IS_DB ? Number(process.env.DASHBOARD_TTL_SEC || 20) * 1000 : Infinity;
+const TTL_MS = IS_DB ? Number(process.env.DASHBOARD_TTL_SEC || 10) * 1000 : Infinity;
 
 let cache: { at: number; result: ReturnType<typeof computeScores> } | null = null;
 
