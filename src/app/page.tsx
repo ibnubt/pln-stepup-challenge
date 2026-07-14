@@ -15,8 +15,10 @@ function labelDate(d: string) {
   return `${Number(day)} ${MONTHS[Number(m) - 1]} ${y}`;
 }
 
-export default function DashboardPage() {
-  const s = getScores();
+export const revalidate = 300; // refresh tiap 5 menit (untuk mode DB)
+
+export default async function DashboardPage() {
+  const s = await getScores();
 
   const first = s.byDate[0]?.date ?? s.today;
   const period = `${Number(first.split("-")[2])}–${labelDate(s.today)}`;

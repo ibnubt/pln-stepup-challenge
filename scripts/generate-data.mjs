@@ -67,7 +67,7 @@ const PERSONA_PLAN = [
 ]; // 29 -> FAISAL ditambah sbg regular
 
 // office floor pool (dominan mid/atas, sedikit bawah)
-const OFFICE_POOL = ["LT2", "LT3", "LT4", "LT5", "LT6", "LT7", "LT8", "LT10", "LT12", "LT13", "LT14", "LT15"];
+const OFFICE_POOL = ["LT2", "LT3", "LT4", "LT5", "LT6", "LT7", "LT8", "LT9", "LT10", "LT11", "LT12", "LT13", "LT14", "LT15", "LT16"];
 
 const employees = [];
 for (let i = 0; i < NAMES.length; i++) {

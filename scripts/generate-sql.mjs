@@ -33,7 +33,7 @@ DROP TABLE IF EXISTS employees CASCADE;
 CREATE TABLE employees (
   id         TEXT PRIMARY KEY,
   name       TEXT NOT NULL,
-  card       INTEGER,
+  card       BIGINT,
   unit       TEXT,
   persona    TEXT,            -- kebiasaan: champion|regular|occasional|rare
   office     TEXT,            -- lantai kantor (mis. LT12)

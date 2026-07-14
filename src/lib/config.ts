@@ -3,10 +3,10 @@
 // Sumber lantai: Door Config Report.csv (159 reader, mencakup B2..LT15).
 // ============================================================================
 
-/** Urutan level dari bawah ke atas. Index dipakai untuk hitung jumlah lantai. */
+/** Urutan level dari bawah ke atas (18 level: B2,B1,LT1..LT16). Index dipakai untuk hitung jumlah lantai. */
 export const LEVELS = [
-  "B2", "B1", "LT1", "LT2", "LT3", "LT4", "LT5", "LT6",
-  "LT7", "LT8", "LT9", "LT10", "LT11", "LT12", "LT13", "LT14", "LT15",
+  "B2", "B1", "LT1", "LT2", "LT3", "LT4", "LT5", "LT6", "LT7", "LT8",
+  "LT9", "LT10", "LT11", "LT12", "LT13", "LT14", "LT15", "LT16",
 ] as const;
 
 export type Level = (typeof LEVELS)[number];
@@ -29,6 +29,7 @@ export const LEVEL_LABEL: Record<Level, string> = {
   LT13: "Lantai 13",
   LT14: "Lantai 14",
   LT15: "Lantai 15",
+  LT16: "Lantai 16",
 };
 
 export const levelIndex = (l: Level | string) => LEVELS.indexOf(l as Level);
@@ -38,9 +39,9 @@ export const CHECKPOINT_ZONE: Level[] = ["LT1", "LT2", "LT3", "LT4"];
 export const CHECKPOINT_MIN_IDX = levelIndex("LT1");
 export const CHECKPOINT_MAX_IDX = levelIndex("LT4");
 
-/** Lift hanya melayani LT1..LT15 (bukan basement). */
+/** Lift hanya melayani LT1..LT16 (bukan basement). */
 export const LIFT_MIN_IDX = levelIndex("LT1");
-export const LIFT_MAX_IDX = levelIndex("LT15");
+export const LIFT_MAX_IDX = levelIndex("LT16");
 
 // ---- Poin dasar ----
 export const POINTS_UP_PER_FLOOR = 100;

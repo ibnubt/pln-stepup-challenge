@@ -73,7 +73,22 @@ psql "postgres://USER:PASS@HOST:5432/DBNAME" -f db/seed.sql
 ```
 Skema: tabel `employees` (30 baris) + `taps` (raw tap RFID). Cek: `SELECT kind, COUNT(*) FROM taps GROUP BY kind;`
 
-> Catatan: versi ini **membaca data dari JSON**, bukan dari Postgres. `seed.sql` disediakan bila Anda ingin menyimpan/mengolah data di DB atau menyambungkannya ke backend nanti.
+> Catatan: default app **membaca data dari JSON** (demo). Untuk data real, lihat di bawah.
+
+### Mode data REAL (PostgreSQL, dari `rpt_trx`)
+App bisa membaca dari tabel bersih `taps`/`employees` yang di-ETL dari `rpt_trx` (sistem akses RFID).
+
+```bash
+# 1. buat tabel + reader tangga
+psql "$DBURL" -f db/seed.sql            # skema taps/employees (isi demo, nanti ditimpa ETL)
+psql "$DBURL" -f db/stair-reader.sql    # master 18 reader "... Tangga Darurat Tengah" → lantai
+# 2. ekstrak event tangga real dari rpt_trx
+psql "$DBURL" -f db/etl-rpt-trx.sql     # filter Valid Credential, trxdate→WIB, extsysid=NIP
+# 3. jalankan app dengan sumber DB (isi kredensial via env, JANGAN hardcode)
+DATA_SOURCE=db PGSSL=true DATABASE_URL="postgres://USER:PASS@HOST:5432/DBNAME" npm run start
+```
+
+Pemetaan kolom (`rpt_trx` → app): `trxdate`(WIB)→ts · `extsysid`→NIP · `fname`→nama · `cardno`→kartu · `sourcename`→reader/lantai (via `stair_reader`). Jadwalkan ETL via cron untuk data terbaru.
 
 ---
 

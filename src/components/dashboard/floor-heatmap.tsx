@@ -80,7 +80,7 @@ export function FloorHeatmap({
         </div>
         <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1">
-            <MoveVertical className="h-3 w-3" /> 17 level · B2 → LT15
+            <MoveVertical className="h-3 w-3" /> {LEVELS.length} level · {LEVELS[0]} → {LEVELS[LEVELS.length - 1]}
           </span>
           <span className="flex items-center gap-1">
             <ArrowUpDown className="h-3 w-3" /> Checkpoint reward: LT1–LT4

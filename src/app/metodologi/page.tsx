@@ -61,8 +61,10 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
   );
 }
 
-export default function MetodologiPage() {
-  const s = getScores();
+export const revalidate = 300;
+
+export default async function MetodologiPage() {
+  const s = await getScores();
   const k = s.kpi;
 
   return (
@@ -128,7 +130,7 @@ export default function MetodologiPage() {
           <Row k="Peta lantai (doors-by-floor.json)" v="dari Door Config Report — 159 reader, mencakup B2 s/d LT15" />
           <Row k="Rentang data" v="bulan berjalan (mulai tgl 1)" />
           <p className="pt-1">
-            Model gedung: <b className="text-foreground">17 level</b> (B2, B1, LT1–LT15). Lift melayani LT1–LT15;
+            Model gedung: <b className="text-foreground">18 level</b> (B2, B1, LT1–LT16). Lift melayani LT1–LT16;
             basement wajib tangga.
           </p>
         </Section>
