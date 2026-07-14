@@ -15,7 +15,7 @@ function labelDate(d: string) {
   return `${Number(day)} ${MONTHS[Number(m) - 1]} ${y}`;
 }
 
-export const revalidate = 300; // refresh tiap 5 menit (untuk mode DB)
+export const dynamic = "force-dynamic"; // render per request; kesegaran diatur cache TTL di getScores
 
 export default async function DashboardPage() {
   const s = await getScores();

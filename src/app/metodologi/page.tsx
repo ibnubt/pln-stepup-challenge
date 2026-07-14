@@ -61,7 +61,7 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
   );
 }
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export default async function MetodologiPage() {
   const s = await getScores();

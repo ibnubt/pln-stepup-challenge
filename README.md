@@ -26,31 +26,40 @@ npm run start          # PORT=3200 npm run start  (ganti port bila 3000 terpakai
 
 ---
 
-## Docker (deploy di server)
+## Docker — satu perintah, semua jalan
 
-Image Next.js **standalone** — kecil (~230 MB), tanpa database.
+`docker compose` menyalakan **3 service**: `db` (Postgres) + `web` (dashboard, baca DB) + `sync` (worker menarik tap tangga dari `rpt_trx` tiap N detik). Data real, near-realtime.
 
 ```bash
 git clone https://github.com/ibnubt/pln-stepup-challenge.git
 cd pln-stepup-challenge
 
-# Opsi A — docker compose (paling gampang)
-docker compose up -d --build          # → http://SERVER:3000
-
-# Opsi B — docker manual
-docker build -t pln-wellness .
-docker run -d -p 3000:3000 --name pln-wellness --restart unless-stopped pln-wellness
+cp .env.example .env       # isi SOURCE_DATABASE_URL (rpt_trx), atur SYNC_INTERVAL, WEB_PORT
+docker compose up -d --build
+# → http://SERVER:3000  (login admin / pln2026)
 ```
 
-Ganti port host bila 3000 terpakai: `-p 8080:3000` (atau edit `docker-compose.yml`).
+`.env` yang perlu diisi:
+```
+SOURCE_DATABASE_URL=postgres://USER:PASS@HOST:5432/TransactionDB   # sumber rpt_trx (read-only)
+SOURCE_PGSSL=true
+SYNC_INTERVAL=30          # detik antar sync (mis. 5 utk lebih realtime)
+WEB_PORT=3000             # ganti bila port host bentrok
+```
+
+Skema DB + 18 reader tangga dibuat otomatis (`db/init/`). Worker mengisi `taps`/`employees` secara incremental (watermark, idempotent). Dashboard refresh tiap ~20 dtk (TTL). Total jeda tap→muncul ≈ `SYNC_INTERVAL` + 20 dtk.
 
 ```bash
-docker logs -f pln-wellness      # lihat log
-docker compose down              # stop (compose)
-docker rm -f pln-wellness        # stop (manual)
+docker compose logs -f sync    # lihat sync
+docker compose down            # stop (data tetap di volume)
+docker compose down -v         # stop + hapus data
+git pull && docker compose up -d --build   # update
 ```
 
-Update versi baru: `git pull && docker compose up -d --build`.
+> Reader tangga sedang disiapkan — kalau nama `sourcename` final berbeda, edit `db/init/02-stair-reader.sql` lalu `docker compose up -d`.
+
+### Mode demo (tanpa DB)
+Tanpa `.env`/DB: jalankan langsung dengan data sintetis — `npm install && npm run dev` (default `DATA_SOURCE` kosong → baca JSON).
 
 ---
 

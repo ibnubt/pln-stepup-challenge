@@ -37,3 +37,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]
+
+# ---- 4. worker: sync incremental rpt_trx → taps (dipakai service 'sync') ----
+FROM node:20-alpine AS worker
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json ./
+COPY scripts ./scripts
+CMD ["node", "scripts/sync-rpt-trx.mjs"]

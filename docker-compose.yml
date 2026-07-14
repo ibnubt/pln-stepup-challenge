@@ -1,11 +1,51 @@
+# Satu perintah: docker compose up -d --build
+# 3 service: db (Postgres) + web (dashboard) + sync (worker rpt_trx → taps).
+# Kredensial sumber (rpt_trx) diisi di file .env (lihat .env.example) — JANGAN commit.
+
 services:
-  web:
-    build: .
-    image: pln-wellness
-    container_name: pln-wellness
-    ports:
-      - "3000:3000" # ubah ke "8080:3000" dst bila port host bentrok
+  db:
+    image: postgres:16-alpine
     environment:
-      - PORT=3000
-      - NODE_ENV=production
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-wellness}
+      POSTGRES_DB: wellness
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro   # buat tabel + stair_reader saat init
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d wellness"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      target: runner
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATA_SOURCE: db
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD:-wellness}@db:5432/wellness
+    ports:
+      - "${WEB_PORT:-3000}:3000"   # set WEB_PORT di .env bila port host bentrok
+    restart: unless-stopped
+
+  sync:
+    build:
+      context: .
+      target: worker
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD:-wellness}@db:5432/wellness
+      SOURCE_DATABASE_URL: ${SOURCE_DATABASE_URL}   # sumber rpt_trx — isi di .env
+      SOURCE_PGSSL: ${SOURCE_PGSSL:-true}
+      SYNC_INTERVAL: ${SYNC_INTERVAL:-30}           # detik antar sync
+      SYNC_BACKFILL_DAYS: ${SYNC_BACKFILL_DAYS:-35}
+    restart: unless-stopped
+
+volumes:
+  pgdata:
