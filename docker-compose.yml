@@ -28,6 +28,7 @@ services:
     environment:
       DATA_SOURCE: db
       DATABASE_URL: postgres://postgres:${DB_PASSWORD:-wellness}@db:5432/wellness
+      DASHBOARD_TTL_SEC: ${DASHBOARD_TTL_SEC:-10}   # umur cache skor (dtk)
     ports:
       - "${WEB_PORT:-3000}:3000"   # set WEB_PORT di .env bila port host bentrok
     restart: unless-stopped
@@ -45,6 +46,7 @@ services:
       SOURCE_PGSSL: ${SOURCE_PGSSL:-true}
       SYNC_INTERVAL: ${SYNC_INTERVAL:-30}           # detik antar sync
       SYNC_BACKFILL_DAYS: ${SYNC_BACKFILL_DAYS:-35}
+      SYNC_VALID_ONLY: ${SYNC_VALID_ONLY:-}         # 1 = hanya Valid Credential (default: +Invalid)
     restart: unless-stopped
 
 volumes:
