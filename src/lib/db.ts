@@ -13,6 +13,8 @@ function getPool() {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL, // postgres://user:pass@host:5432/db
       ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: false } : undefined,
+      // schema opsional (mis. tabel di skema 'wellness', bukan public)
+      options: process.env.PGSCHEMA ? `-c search_path=${process.env.PGSCHEMA},public` : undefined,
       max: 4,
     });
   }

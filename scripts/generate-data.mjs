@@ -12,8 +12,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, "..", "src", "data");
 
 const LEVELS = [
-  "B2", "B1", "LT1", "LT2", "LT3", "LT4", "LT5", "LT6",
-  "LT7", "LT8", "LT9", "LT10", "LT11", "LT12", "LT13", "LT14", "LT15",
+  "B2", "B1", "LT1", "LT2", "LT3", "LT4", "LT5", "LT6", "LT7", "LT8",
+  "LT9", "LT10", "LT11", "LT12", "LT13", "LT14", "LT15", "LT16",
 ];
 const idx = (l) => LEVELS.indexOf(l);
 const GROUND = "LT1";
