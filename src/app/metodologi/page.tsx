@@ -115,7 +115,7 @@ export default async function MetodologiPage() {
             <div className="mt-3">
               <F>{`RAW TAP (taps.json)
    → [1] Deteksi sesi tangga (rangkai tap berurutan)
-   → [2] Cek check-in harian (tap LT1–4) → tentukan hari berpoin
+   → [2] Cek check-in harian (lewati LT1→LT4 penuh) → tentukan hari berpoin
    → [3] Skoring poin (koefisien progresif per-trip)
    → [4] Agregasi per pegawai / per hari / org
    → [5] KPI + Dampak (energi, emisi, kalori)`}</F>
@@ -159,10 +159,11 @@ export default async function MetodologiPage() {
 Jeda > ${SEC_PER_FLOOR_MAX} detik  →  sesi PUTUS, mulai sesi baru`}</F>
           <p>
             <b className="text-foreground">Aturan check-in:</b> pegawai wajib{" "}
-            <b className="text-pln-gold">tap checkpoint {CHECKPOINT_ZONE.join("-")}</b> minimal sekali (biasanya saat
-            datang pagi). <b className="text-foreground">Setelah check-in, SEMUA sesi tangga hari itu dapat poin</b> —
-            termasuk gerakan antar-lantai atas (mis. LT7→LT9), tanpa harus lewat LT1-4 lagi. Hari{" "}
-            <b className="text-foreground">tanpa check-in → tidak ada poin</b>.
+            <b className="text-pln-gold">melewati seluruh {CHECKPOINT_ZONE.join("→")}</b> dalam satu sesi (tap{" "}
+            {CHECKPOINT_ZONE.join("-")} atau sebaliknya) minimal sekali (biasanya saat datang pagi). Sekadar menyentuh
+            tepi zona (mis. B1→LT1) belum dianggap check-in. <b className="text-foreground">Setelah check-in, SEMUA sesi
+            tangga hari itu dapat poin</b> — termasuk gerakan antar-lantai atas (mis. LT7→LT9), tanpa harus lewat LT1–LT4
+            lagi. Hari <b className="text-foreground">tanpa check-in → tidak ada poin</b>.
           </p>
         </Section>
 

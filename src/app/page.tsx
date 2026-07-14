@@ -20,6 +20,11 @@ export const dynamic = "force-dynamic"; // render per request; kesegaran diatur 
 export default async function DashboardPage() {
   const s = await getScores();
 
+  // Papan peringkat & distribusi tier: hanya pegawai BERPOIN (sudah check-in / activeDays>0).
+  // Yang pakai tangga tapi belum check-in tetap dihitung di KPI partisipasi (penyebut), tapi
+  // tak jadi baris serba-nol di leaderboard.
+  const ranked = s.employeeStats.filter((e) => e.activeDays > 0);
+
   const first = s.byDate[0]?.date ?? s.today;
   const period = `${Number(first.split("-")[2])}–${labelDate(s.today)}`;
 
@@ -41,7 +46,7 @@ export default async function DashboardPage() {
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <Leaderboard stats={s.employeeStats} />
+            <Leaderboard stats={ranked} />
           </div>
           <FloorHeatmap data={s.floorHeat} />
         </div>
@@ -50,7 +55,7 @@ export default async function DashboardPage() {
           <div className="lg:col-span-2">
             <HourlyChart data={s.hourly} />
           </div>
-          <TierDistribution stats={s.employeeStats} />
+          <TierDistribution stats={ranked} />
         </div>
 
         <footer className="flex flex-col items-center gap-1 py-6 text-center text-[11px] text-muted-foreground">

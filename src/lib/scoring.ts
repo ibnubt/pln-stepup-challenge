@@ -53,7 +53,7 @@ export interface Session {
   floors: number;
   startLevel: string;
   endLevel: string;
-  checkpoint: boolean; // sesi ini melewati zona LT1-4 (dipakai deteksi check-in harian)
+  checkpoint: boolean; // sesi ini melewati SELURUH zona LT1→LT4 (dipakai deteksi check-in harian)
   counted: boolean; // dapat poin (hari ini sudah check-in)
   koef: number;
   points: number;
@@ -100,7 +100,9 @@ function detectSessions(stairTaps: Tap[]): Omit<Session, "koef" | "points" | "co
       const ei = levelIndex(endLevel);
       const lo = Math.min(si, ei);
       const hi = Math.max(si, ei);
-      const checkpoint = hi >= CHECKPOINT_MIN_IDX && lo <= CHECKPOINT_MAX_IDX;
+      // check-in: sesi ini harus MELEWATI SELURUH zona LT1→LT4 (mencakup LT1 s/d LT4,
+      // naik atau turun). Sekadar menyentuh tepi zona (mis. B1→LT1) TIDAK cukup.
+      const checkpoint = lo <= CHECKPOINT_MIN_IDX && hi >= CHECKPOINT_MAX_IDX;
       out.push({
         emp: run[0].e,
         date: dateKey(run[0].t),
@@ -123,9 +125,10 @@ function detectSessions(stairTaps: Tap[]): Omit<Session, "koef" | "points" | "co
 
 /**
  * Skoring 1 pegawai dalam 1 hari.
- * ATURAN CHECK-IN: pegawai harus tap checkpoint (lewat LT1-4) minimal sekali hari itu
- * agar memenuhi syarat. Setelah check-in, SEMUA sesi tangga hari itu dapat poin
- * (termasuk gerakan antar-lantai atas seperti LT7→LT9). Koefisien progresif per-trip.
+ * ATURAN CHECK-IN: pegawai harus melewati SELURUH zona LT1→LT4 dalam satu sesi
+ * (tap 1-2-3-4 atau sebaliknya) minimal sekali hari itu agar memenuhi syarat.
+ * Setelah check-in, SEMUA sesi tangga hari itu dapat poin (termasuk gerakan antar-lantai
+ * atas seperti LT7→LT9). Koefisien progresif per-trip.
  */
 function scoreDay(daySessions: Omit<Session, "koef" | "points" | "counted">[]): Session[] {
   const sorted = [...daySessions].sort((a, b) => (a.time < b.time ? -1 : 1));

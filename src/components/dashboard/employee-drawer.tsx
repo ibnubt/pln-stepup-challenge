@@ -43,7 +43,7 @@ function SessionRow({ s }: { s: Session }) {
           {s.startLevel}→{s.endLevel}
         </span>
         {s.checkpoint && (
-          <span className="shrink-0 whitespace-nowrap rounded-sm bg-pln-yellow/20 px-1 text-[8px] font-bold uppercase leading-normal text-pln-gold" title="tap checkpoint LT1-4">
+          <span className="shrink-0 whitespace-nowrap rounded-sm bg-pln-yellow/20 px-1 text-[8px] font-bold uppercase leading-normal text-pln-gold" title="sesi ini melewati seluruh LT1→LT4">
             check-in
           </span>
         )}
