@@ -31,26 +31,29 @@ async function syncOnce(dst, src) {
   const levelOf = new Map(readers.map((r) => [r.sourcename, r.level]));
   const names = readers.map((r) => r.sourcename);
 
+  // identitas pegawai: NIP (extsysid) bila ada, kalau tidak pakai nomor kartu (cardno)
+  const eid = (r) => (r.extsysid && String(r.extsysid).trim()) || String(r.cardno);
+
   // tarik tap baru (idempotent via ts unique → boleh >= )
   const res = await src.query(
     `SELECT trxdate, extsysid, sourcename, fname, lname, cardno, identitydepartment
        FROM rpt_trx
       WHERE sourcename = ANY($1) AND evtypename = 'Valid Credential'
-        AND extsysid IS NOT NULL AND trxdate >= $2
+        AND cardno IS NOT NULL AND trxdate >= $2
       ORDER BY trxdate
       LIMIT 5000`,
     [names, from]
   );
   if (!res.rows.length) return;
 
-  // upsert pegawai (dedup NIP)
-  const emps = [...new Map(res.rows.map((r) => [r.extsysid, r])).values()];
+  // upsert pegawai (dedup per identitas)
+  const emps = [...new Map(res.rows.map((r) => [eid(r), r])).values()];
   const ev = [], ep = [];
   emps.forEach((r, k) => {
     const o = k * 4;
     ep.push(`($${o + 1},$${o + 2},$${o + 3},$${o + 4},TRUE)`);
     ev.push(
-      r.extsysid,
+      eid(r),
       (r.fname || "").trim() || null,
       r.cardno != null ? Number(r.cardno) : null,
       (r.identitydepartment || r.lname || "").trim() || null
@@ -72,7 +75,7 @@ async function syncOnce(dst, src) {
     chunk.forEach((r, k) => {
       const o = k * 4;
       tp.push(`((to_timestamp($${o + 1}) AT TIME ZONE 'UTC')::timestamp,$${o + 2},$${o + 3},$${o + 4},'stair')`);
-      tv.push(Number(r.trxdate), r.extsysid, levelOf.get(r.sourcename), r.sourcename);
+      tv.push(Number(r.trxdate), eid(r), levelOf.get(r.sourcename), r.sourcename);
       if (Number(r.trxdate) > maxT) maxT = Number(r.trxdate);
     });
     const q = await dst.query(

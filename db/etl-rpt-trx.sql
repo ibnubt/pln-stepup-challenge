@@ -31,9 +31,10 @@ DELETE FROM employees;   -- buang pegawai demo; taps sudah kosong jadi aman
 
 -- ---- 3. Pegawai unik dari event tangga (HARUS sebelum taps karena FK) ----
 -- gender/weight/height TIDAK ada di rpt_trx → NULL (app fallback ke rata-rata Kemenkes).
+-- identitas = NIP (extsysid) bila ada, kalau tidak pakai nomor kartu (cardno)
 INSERT INTO employees (id, name, card, unit, persona, office, gender, weight_kg, height_cm, basement, is_real)
-SELECT DISTINCT ON (r.extsysid)
-  r.extsysid                                              AS id,
+SELECT DISTINCT ON (COALESCE(NULLIF(TRIM(r.extsysid),''), r.cardno::text))
+  COALESCE(NULLIF(TRIM(r.extsysid),''), r.cardno::text)   AS id,
   NULLIF(TRIM(r.fname), '')                               AS name,   -- fname = nama lengkap
   r.cardno::bigint                                        AS card,
   COALESCE(NULLIF(TRIM(r.identitydepartment), ''), NULLIF(TRIM(r.lname), '')) AS unit,
@@ -46,20 +47,20 @@ SELECT DISTINCT ON (r.extsysid)
   TRUE                                                    AS is_real
 FROM rpt_trx r
 JOIN stair_reader sr ON sr.sourcename = r.sourcename
-WHERE r.extsysid IS NOT NULL AND r.evtypename = 'Valid Credential'
-ORDER BY r.extsysid, r.trxdate DESC;
+WHERE r.cardno IS NOT NULL AND r.evtypename = 'Valid Credential'
+ORDER BY COALESCE(NULLIF(TRIM(r.extsysid),''), r.cardno::text), r.trxdate DESC;
 
 -- ---- 4. Event tap tangga → taps ----
 INSERT INTO taps (ts, employee_id, level, device, kind)
 SELECT
   (to_timestamp(r.trxdate) AT TIME ZONE 'UTC')::timestamp AS ts,  -- jam WIB apa adanya
-  r.extsysid                                              AS employee_id,
+  COALESCE(NULLIF(TRIM(r.extsysid),''), r.cardno::text)   AS employee_id,
   sr.level                                                AS level,
   r.sourcename                                            AS device,
   'stair'                                                 AS kind
 FROM rpt_trx r
 JOIN stair_reader sr ON sr.sourcename = r.sourcename       -- index sourcename → cepat
-WHERE r.extsysid IS NOT NULL
+WHERE r.cardno IS NOT NULL
   AND r.evtypename = 'Valid Credential'                    -- tap sah (Local Grant)
   -- opsional batasi rentang (bulan berjalan):
   -- AND r.trxdate >= extract(epoch FROM date_trunc('month', now()))::bigint
