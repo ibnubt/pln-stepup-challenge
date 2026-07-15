@@ -177,6 +177,7 @@ export function EmployeeDrawer({
   const e = stat.emp;
   const initials = e.name.replace(/—.*/, "").trim().split(" ").slice(0, 2).map((w) => w[0]).join("");
   const bestDay = Math.max(1, ...stat.days.map((d) => d.points));
+  const noScore = stat.totalPoints === 0; // naik tangga tapi belum check-in → tampilkan raw, abu-abu
 
   // kelompokkan sesi per hari (terbaru dulu)
   const dayMap = new Map(stat.days.map((d) => [d.date, d]));
@@ -247,11 +248,11 @@ export function EmployeeDrawer({
           <div className="grid grid-cols-2 gap-2.5">
             <Stat icon={Trophy} label="Total Poin" value={fmt(stat.totalPoints)} tone="text-pln-gold" />
             <Stat icon={Gauge} label="Rata2 / Hari" value={fmt(stat.avgPointsPerDay)} />
-            <Stat icon={TrendingUp} label="Lantai Naik" value={fmt(stat.upFloors)} tone="text-[hsl(var(--success))]" />
-            <Stat icon={TrendingDown} label="Lantai Turun" value={fmt(stat.downFloors)} />
+            <Stat icon={TrendingUp} label="Lantai Naik" value={fmt(noScore ? stat.upFloorsRaw : stat.upFloors)} tone={noScore ? "text-muted-foreground" : "text-[hsl(var(--success))]"} />
+            <Stat icon={TrendingDown} label="Lantai Turun" value={fmt(noScore ? stat.downFloorsRaw : stat.downFloors)} />
             <Stat icon={CalendarCheck} label="Hari Aktif" value={`${stat.activeDays}`} />
             <Stat icon={Flame} label="Streak Terbaik" value={`${stat.longestStreak} hari`} tone="text-[hsl(var(--warning))]" />
-            <Stat icon={Footprints} label="Trip Tangga" value={fmt(stat.stairTrips)} />
+            <Stat icon={Footprints} label="Trip Tangga" value={fmt(noScore ? stat.stairTripsRaw : stat.stairTrips)} />
             <Stat icon={Gauge} label="Share Tangga" value={`${Math.round(stat.stairShare * 100)}%`} />
           </div>
 

@@ -170,6 +170,9 @@ export interface EmployeeStat {
   totalPoints: number;
   upFloors: number;
   downFloors: number;
+  upFloorsRaw: number; // termasuk sesi TANPA check-in (untuk tampilan "naik" abu-abu)
+  downFloorsRaw: number;
+  stairTripsRaw: number;
   activeDays: number;
   avgPointsPerDay: number;
   avgUpFloorsPerDay: number;
@@ -294,6 +297,10 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
     const upFloors = days.reduce((a, d) => a + d.upFloors, 0);
     const downFloors = days.reduce((a, d) => a + d.downFloors, 0);
     const stairTrips = sess.length;
+    // metrik "raw" = seluruh sesi termasuk yang tanpa check-in (0 poin) — untuk tampilan
+    const upFloorsRaw = allEmpSess.filter((s) => s.dir === "up").reduce((a, s) => a + s.floors, 0);
+    const downFloorsRaw = allEmpSess.filter((s) => s.dir === "down").reduce((a, s) => a + s.floors, 0);
+    const stairTripsRaw = allEmpSess.length;
     const liftTrips = days.reduce((a, d) => a + d.liftTrips, 0);
     const activeDays = days.length;
     const { current, longest } = streaks(days.map((d) => d.date));
@@ -303,6 +310,9 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
       totalPoints,
       upFloors,
       downFloors,
+      upFloorsRaw,
+      downFloorsRaw,
+      stairTripsRaw,
       activeDays,
       avgPointsPerDay: activeDays ? Math.round(totalPoints / activeDays) : 0,
       avgUpFloorsPerDay: Math.round(avgUp * 10) / 10,

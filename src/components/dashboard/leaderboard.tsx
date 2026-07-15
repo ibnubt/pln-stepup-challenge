@@ -145,11 +145,17 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
               {pageRows.map((s) => {
                 const rank = rankMap.get(s.emp.id)!;
                 const initials = s.emp.name.replace(/—.*/, "").trim().split(" ").slice(0, 2).map((w) => w[0]).join("");
+                const noScore = s.totalPoints === 0; // naik tangga tapi belum check-in → abu-abu
+                const floors = noScore ? s.upFloorsRaw : s.upFloors; // tetap tampilkan lantai yang dinaiki
+                const trips = noScore ? s.stairTripsRaw : s.stairTrips;
                 return (
                   <tr
                     key={s.emp.id}
                     onClick={() => setSelected(s)}
-                    className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/40"
+                    className={cn(
+                      "cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/40",
+                      noScore && "opacity-45"
+                    )}
                   >
                     <td className="px-4 py-2.5">
                       {rank <= 3 ? (
@@ -172,6 +178,11 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                           <div className="flex items-center gap-1.5 truncate font-medium">
                             {s.emp.name.replace(/ — .*/, "")}
                             {s.emp.real && <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--success))]" />}
+                            {noScore && (
+                              <span className="shrink-0 whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground" title="naik tangga tapi belum check-in (lewati LT1→LT4) — skor 0">
+                                belum check-in
+                              </span>
+                            )}
                           </div>
                           <div className="truncate text-[11px] text-muted-foreground">
                             {s.emp.unit} · {s.emp.office}
@@ -182,8 +193,8 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                     <td className="px-2 py-2.5">
                       <TierBadge tier={s.tier} />
                     </td>
-                    <td className="tabular px-3 py-2.5 text-right text-[hsl(var(--success))]">{fmt(s.upFloors)}</td>
-                    <td className="tabular px-3 py-2.5 text-right text-muted-foreground">{fmt(s.stairTrips)}</td>
+                    <td className={cn("tabular px-3 py-2.5 text-right", noScore ? "text-muted-foreground" : "text-[hsl(var(--success))]")}>{fmt(floors)}</td>
+                    <td className="tabular px-3 py-2.5 text-right text-muted-foreground">{fmt(trips)}</td>
                     <td className="px-3 py-2.5 text-right">
                       <span className="tabular inline-flex items-center gap-1.5">
                         <span className="hidden h-1.5 w-10 overflow-hidden rounded-full bg-muted sm:inline-block">

@@ -20,9 +20,8 @@ export const dynamic = "force-dynamic"; // render per request; kesegaran diatur 
 export default async function DashboardPage() {
   const s = await getScores();
 
-  // Papan peringkat & distribusi tier: hanya pegawai BERPOIN (sudah check-in / activeDays>0).
-  // Yang pakai tangga tapi belum check-in tetap dihitung di KPI partisipasi (penyebut), tapi
-  // tak jadi baris serba-nol di leaderboard.
+  // Distribusi tier: hanya pegawai BERPOIN (sudah check-in). Leaderboard: tampilkan SEMUA yang
+  // naik tangga (punya sesi) — yang belum check-in muncul abu-abu, skor 0 (lihat Leaderboard).
   const ranked = s.employeeStats.filter((e) => e.activeDays > 0);
 
   // Periode "Bulan Berjalan" = tanggal 1 s/d HARI INI (WIB), lepas dari ada/tidaknya data.
@@ -49,7 +48,7 @@ export default async function DashboardPage() {
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <Leaderboard stats={ranked} />
+            <Leaderboard stats={s.employeeStats} />
           </div>
           <FloorHeatmap data={s.floorHeat} />
         </div>
