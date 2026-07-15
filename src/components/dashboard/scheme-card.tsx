@@ -38,14 +38,14 @@ export function SchemeCard() {
           <span>
             <b className="text-foreground">Koefisien progresif per-trip</b>: makin banyak lantai naik
             terkumpul dalam sehari, makin tinggi pengali trip berikutnya. Wajib{" "}
-            <b className="text-pln-gold">check-in (lewati LT1→LT4 penuh)</b> sekali saat datang; setelah itu
-            semua sesi tangga hari itu dapat poin.
+            <b className="text-pln-gold">check-in (NAIK LT1→LT2→LT3→LT4)</b> sekali saat datang; setelah itu
+            semua sesi tangga hari itu (termasuk turun) dapat poin.
           </span>
         </p>
 
         <div className="mt-3 space-y-1">
           <div className="flex items-center gap-2 px-2.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <span className="w-[86px]">Tier</span>
+            <span className="w-[86px]">Badge</span>
             <span className="ml-auto">Lantai naik/hari</span>
             <span className="w-12 text-center">Koef</span>
           </div>
@@ -72,7 +72,7 @@ export function SchemeCard() {
         </div>
 
         <p className="mt-3 border-t border-border pt-2.5 text-[10px] leading-relaxed text-muted-foreground">
-          <b className="text-foreground">Level pegawai</b> (badge di leaderboard) dihitung dari
+          <b className="text-foreground">Badge pegawai</b> (di leaderboard & detail) dihitung dari
           <b className="text-foreground"> rata-rata lantai naik / hari aktif</b> — beda dari koefisien
           harian di atas.
         </p>

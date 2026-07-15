@@ -100,6 +100,18 @@ export function levelFor(avgUpPerDay: number, activeDays = 99): Tier {
 }
 
 // ============================================================================
+// ORGANISASI — Pegawai PLN vs Non-Pegawai (TAD, ICON, dll)
+// Klasifikasi dari kolom organisasi/unit. Bila unit memuat salah satu keyword
+// di bawah → dianggap NON-pegawai. Sesuaikan daftarnya dengan data nyata.
+// ============================================================================
+export const NON_PLN_KEYWORDS = ["TAD", "ICON", "PJP", "OUTSOURC", "ALIH DAYA", "VENDOR", "MITRA", "KOPERASI"];
+export function isPlnEmployee(unit: string | null | undefined): boolean {
+  const u = (unit || "").toUpperCase();
+  return !NON_PLN_KEYWORDS.some((k) => u.includes(k));
+}
+export const ORG_LABEL: Record<string, string> = { pln: "Pegawai PLN", non: "Non-Pegawai" };
+
+// ============================================================================
 // PERSONA — kebiasaan pakai tangga (arketipe perilaku pada data)
 // ============================================================================
 export const PERSONA_LABEL: Record<string, string> = {
@@ -140,10 +152,10 @@ export function personaForStreak(streak: number): string {
 // ============================================================================
 export const IMPACT = {
   liftCapacityKg: 800, // kapasitas rated lift PLN Pusat
-  liftWhPerTrip: 20, // Wh per PERJALANAN KABIN — ACEEE/Sachs 2005 (Enermodal 2004): 1.900 kWh/th ÷ 100.000 trip ≈ 19 Wh
+  liftWhPerTrip: 20, // Wh per PERJALANAN KABIN — ACEEE (Sachs 2005): 1.900 kWh/th ÷ 100.000 trip ≈ 19 Wh
   liftEnergyRef: "ACEEE 2005 (Sachs)",
   liftWhPerTripNote: "≈19 Wh/perjalanan · ACEEE 2005",
-  avgBodyWeightKg: 58, // rujukan Kemenkes AKG 2019 (rata2 L 60 / P 55 kg)
+  avgBodyWeightKg: 60, // berat badan tetap 60 kg untuk perhitungan kalori (tanpa bedakan gender)
   gridEfKgPerKwh: 0.773, // proyeksi emisi grid nasional 2025 = 773 g/kWh
   gridEfSource: "grid 2025 · 773 g/kWh",
   floorHeightM: 3.5, // tinggi antar-lantai (m) — untuk info beban
@@ -163,12 +175,5 @@ export const GRID_EF_TRAJECTORY: Record<number, number> = {
   2040: 0.487,
   2050: 0.193,
   2060: 0.0,
-};
-
-/** Rujukan antropometri Kemenkes AKG 2019 (Permenkes No. 28/2019). */
-export const ANTHRO_ID = {
-  source: "Kemenkes AKG 2019 (Permenkes 28/2019)",
-  male: { weight: 60, height: 168 },
-  female: { weight: 55, height: 159 },
 };
 

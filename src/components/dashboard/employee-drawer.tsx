@@ -83,6 +83,12 @@ function SessionRow({ s }: { s: Session }) {
 // —— grup satu tanggal: collapsible ——
 function DayGroup({ date, sessions, day }: { date: string; sessions: Session[]; day?: DayStat }) {
   const [open, setOpen] = useState(false);
+  const [sp, setSp] = useState(1);
+  const SESS_PER_PAGE = 6;
+  const ordered = [...sessions].reverse();
+  const totalSp = Math.max(1, Math.ceil(ordered.length / SESS_PER_PAGE));
+  const safeSp = Math.min(sp, totalSp);
+  const shownSess = ordered.slice((safeSp - 1) * SESS_PER_PAGE, safeSp * SESS_PER_PAGE);
   return (
     <div className="overflow-hidden rounded-lg border border-border/60">
       <button
@@ -102,9 +108,33 @@ function DayGroup({ date, sessions, day }: { date: string; sessions: Session[]; 
       </button>
       {open && (
         <div className="space-y-1.5 border-t border-border/50 bg-muted/10 p-2">
-          {[...sessions].reverse().map((s, i) => (
+          {shownSess.map((s, i) => (
             <SessionRow key={i} s={s} />
           ))}
+          {totalSp > 1 && (
+            <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
+              <span className="tabular">
+                {(safeSp - 1) * SESS_PER_PAGE + 1}–{Math.min(safeSp * SESS_PER_PAGE, ordered.length)} dari {ordered.length} sesi
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setSp((p) => Math.max(1, p - 1))}
+                  disabled={safeSp <= 1}
+                  className="rounded border border-border px-1.5 py-0.5 transition-colors hover:text-foreground disabled:opacity-40"
+                >
+                  Prev
+                </button>
+                <span className="tabular">{safeSp}/{totalSp}</span>
+                <button
+                  onClick={() => setSp((p) => Math.min(totalSp, p + 1))}
+                  disabled={safeSp >= totalSp}
+                  className="rounded border border-border px-1.5 py-0.5 transition-colors hover:text-foreground disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -178,6 +208,10 @@ export function EmployeeDrawer({
   const initials = e.name.replace(/—.*/, "").trim().split(" ").slice(0, 2).map((w) => w[0]).join("");
   const bestDay = Math.max(1, ...stat.days.map((d) => d.points));
   const noScore = stat.totalPoints === 0; // naik tangga tapi belum check-in → tampilkan raw, abu-abu
+  // tap terakhir (langkah terakhir dari sesi terbaru)
+  const lastSess = stat.sessions[stat.sessions.length - 1];
+  const lastStep = lastSess?.steps[lastSess.steps.length - 1];
+  const lastTap = lastStep ? `${lastStep.lvl} · ${dayLabel(lastSess.date)} ${lastStep.t.slice(0, 5)}` : "—";
 
   // kelompokkan sesi per hari (terbaru dulu)
   const dayMap = new Map(stat.days.map((d) => [d.date, d]));
@@ -215,16 +249,18 @@ export function EmployeeDrawer({
                 )}
               </div>
               <p className="text-[11px] text-muted-foreground">
-                {e.unit} · Kartu {e.card} · Kantor {e.office}
+                <span className={cn("mr-1 rounded px-1 text-[9px] font-semibold", stat.isPln ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>
+                  {stat.isPln ? "Pegawai PLN" : "Non-Pegawai"}
+                </span>
+                {e.unit || "-"} · Kartu {e.card}
               </p>
               <p className="text-[11px] text-muted-foreground">
-                {e.gender === "L" ? "Laki-laki" : "Perempuan"} · {e.weight} kg · {e.height} cm ·{" "}
-                {e.basement ? `parkir ${e.basement}` : "parkir non-basement"}
+                Tap terakhir: <span className="font-medium text-foreground">{lastTap}</span>
               </p>
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 <TierBadge tier={stat.tier} size="md" />
                 <span className="text-[10px] text-muted-foreground">
-                  Level · avg {stat.avgUpFloorsPerDay} lt naik/hari
+                  Badge · avg {stat.avgUpFloorsPerDay} lt naik/hari
                 </span>
                 <span
                   className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
@@ -253,6 +289,7 @@ export function EmployeeDrawer({
             <Stat icon={CalendarCheck} label="Hari Aktif" value={`${stat.activeDays}`} />
             <Stat icon={Flame} label="Streak Terbaik" value={`${stat.longestStreak} hari`} tone="text-[hsl(var(--warning))]" />
             <Stat icon={Footprints} label="Trip Tangga" value={fmt(noScore ? stat.stairTripsRaw : stat.stairTrips)} />
+            <Stat icon={Gauge} label="Rata2 Lantai/Hari" value={`↑${stat.avgUpFloorsPerDay} ↓${stat.avgDownFloorsPerDay}`} />
           </div>
 
           <div className="mt-5">

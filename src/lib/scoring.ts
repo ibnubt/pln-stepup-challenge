@@ -16,6 +16,7 @@ import {
   SEC_PER_FLOOR_MAX,
   HOLIDAYS,
   personaForStreak,
+  isPlnEmployee,
   type Tier,
 } from "./config";
 
@@ -117,9 +118,9 @@ function detectSessions(stairTaps: Tap[]): Omit<Session, "koef" | "points" | "co
       const ei = levelIndex(endLevel);
       const lo = Math.min(si, ei);
       const hi = Math.max(si, ei);
-      // check-in: sesi ini harus MELEWATI SELURUH zona LT1→LT4 (mencakup LT1 s/d LT4,
-      // naik atau turun). Sekadar menyentuh tepi zona (mis. B1→LT1) TIDAK cukup.
-      const checkpoint = lo <= CHECKPOINT_MIN_IDX && hi >= CHECKPOINT_MAX_IDX;
+      // check-in: HANYA sesi NAIK yang melewati SELURUH zona LT1→LT4 (tapping 1-2-3-4).
+      // Turun (4→1) TIDAK dianggap check-in. Sekadar menyentuh tepi (mis. B1→LT1) tak cukup.
+      const checkpoint = dir > 0 && lo <= CHECKPOINT_MIN_IDX && hi >= CHECKPOINT_MAX_IDX;
       out.push({
         emp: run[0].e,
         date: dateKey(run[0].t),
@@ -184,6 +185,7 @@ export interface DayStat {
 
 export interface EmployeeStat {
   emp: Employee;
+  isPln: boolean; // true = Pegawai PLN, false = Non-Pegawai (TAD/ICON/dll) — dari kolom unit
   totalPoints: number;
   upFloors: number;
   downFloors: number;
@@ -193,6 +195,7 @@ export interface EmployeeStat {
   activeDays: number;
   avgPointsPerDay: number;
   avgUpFloorsPerDay: number;
+  avgDownFloorsPerDay: number;
   bestDayPoints: number;
   stairTrips: number;
   liftTrips: number;
@@ -218,6 +221,8 @@ export interface ScoreResult {
   employeeStats: EmployeeStat[];
   byDate: DayStat[];
   today: string;
+  month: string; // bulan yang ditampilkan "YYYY-MM"
+  availableMonths: string[]; // bulan yg ada datanya (untuk filter historis), terbaru dulu
   todayHourly: HourStat[];
   floorHeat: { level: string; stair: number; lift: number }[];
   hourly: { hour: number; up: number; down: number }[];
@@ -261,10 +266,22 @@ function streaks(dates: string[]): { current: number; longest: number } {
   return { current: run, longest };
 }
 
-export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
+export function computeScores(
+  taps: Tap[],
+  employees: Employee[],
+  opts?: { month?: string } // "YYYY-MM" — bulan yang ditampilkan (default: bulan berjalan WIB)
+): ScoreResult {
   const empById = new Map(employees.map((e) => [e.id, e]));
-  const stairTaps = taps.filter((t) => t.kind === "stair");
-  const liftTaps = taps.filter((t) => t.kind === "lift");
+  // bulan berjalan (WIB) sbg default; bisa pilih bulan lain utk filter historis
+  const nowWibM = new Date(Date.now() + 7 * 3600 * 1000);
+  const curMonth = `${nowWibM.getUTCFullYear()}-${String(nowWibM.getUTCMonth() + 1).padStart(2, "0")}`;
+  const targetMonth = opts?.month || curMonth;
+  // daftar bulan yg ADA datanya (untuk dropdown historis), terbaru dulu
+  const availableMonths = Array.from(new Set(taps.filter((t) => t.kind === "stair").map((t) => t.t.slice(0, 7)))).sort().reverse();
+  // batasi seluruh perhitungan ke bulan terpilih
+  const monthTaps = taps.filter((t) => t.t.slice(0, 7) === targetMonth);
+  const stairTaps = monthTaps.filter((t) => t.kind === "stair");
+  const liftTaps = monthTaps.filter((t) => t.kind === "lift");
 
   // --- sesi per pegawai per hari ---
   const allSessions: Session[] = [];
@@ -324,8 +341,10 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
     const activeDays = days.length;
     const { current, longest } = streaks(days.map((d) => d.date));
     const avgUp = activeDays ? upFloors / activeDays : 0;
+    const avgDown = activeDays ? downFloors / activeDays : 0;
     employeeStats.push({
       emp,
+      isPln: isPlnEmployee(emp.unit),
       totalPoints,
       upFloors,
       downFloors,
@@ -335,6 +354,7 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
       activeDays,
       avgPointsPerDay: activeDays ? Math.round(totalPoints / activeDays) : 0,
       avgUpFloorsPerDay: Math.round(avgUp * 10) / 10,
+      avgDownFloorsPerDay: Math.round(avgDown * 10) / 10,
       bestDayPoints: days.reduce((a, d) => Math.max(a, d.points), 0),
       stairTrips,
       liftTrips,
@@ -374,11 +394,10 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
     const d = dateMap.get(dateKey(t.t));
     if (d) d.liftTrips += 1;
   }
-  // rangka penuh: tanggal 1 s/d akhir bulan berjalan; hari tanpa data → nilai 0
-  const mY = nowWib.getUTCFullYear();
-  const mM = nowWib.getUTCMonth(); // 0-11
-  const daysInMonth = new Date(Date.UTC(mY, mM + 1, 0)).getUTCDate();
-  const monthPrefix = `${mY}-${String(mM + 1).padStart(2, "0")}-`;
+  // rangka penuh: tanggal 1 s/d akhir bulan TERPILIH; hari tanpa data → nilai 0
+  const [tY, tM] = targetMonth.split("-").map(Number); // tM = 1-12
+  const daysInMonth = new Date(Date.UTC(tY, tM, 0)).getUTCDate();
+  const monthPrefix = `${targetMonth}-`;
   const byDate: DayStat[] = [];
   for (let d = 1; d <= daysInMonth; d++) {
     const date = monthPrefix + String(d).padStart(2, "0");
@@ -434,7 +453,7 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
   }
 
   // --- KPI + dampak (berbobot berat badan tiap pegawai) ---
-  const bwOf = (id: string) => empById.get(id)?.weight ?? IMPACT.avgBodyWeightKg;
+  const bwOf = (_id: string) => IMPACT.avgBodyWeightKg; // berat tetap 60 kg (tanpa bedakan gender)
   const counted = allSessions.filter((s) => s.counted);
   const qualUp = counted.filter((s) => s.dir === "up");
   const upFloors = qualUp.reduce((a, s) => a + s.floors, 0);
@@ -466,6 +485,8 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
     employeeStats,
     byDate,
     today,
+    month: targetMonth,
+    availableMonths,
     todayHourly,
     floorHeat,
     hourly,

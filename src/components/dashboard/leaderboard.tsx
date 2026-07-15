@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { EmployeeStat } from "@/lib/scoring";
-import { TierBadge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, SectionLabel } from "@/components/ui/card";
 import { cn, fmt } from "@/lib/utils";
 import { EmployeeDrawer } from "./employee-drawer";
@@ -13,18 +12,16 @@ const PAGE_SIZE = 10;
 type SortKey = "totalPoints" | "upFloors" | "stairTrips" | "currentStreak" | "activeDays";
 
 const COLS: { key: SortKey; label: string; align?: "right" }[] = [
-  { key: "upFloors", label: "Lantai Naik", align: "right" },
-  { key: "stairTrips", label: "Trip Tangga", align: "right" },
   { key: "currentStreak", label: "Streak", align: "right" },
   { key: "totalPoints", label: "Poin", align: "right" },
+  { key: "upFloors", label: "Lantai Naik", align: "right" },
+  { key: "stairTrips", label: "Trip Tangga", align: "right" },
 ];
 
-const PERSONAS = [
+const ORGS = [
   { key: "all", label: "Semua" },
-  { key: "champion", label: "Pegiat Tangga" },
-  { key: "regular", label: "Rutin" },
-  { key: "occasional", label: "Kadang" },
-  { key: "rare", label: "Jarang" },
+  { key: "pln", label: "Pegawai PLN" },
+  { key: "non", label: "Non-Pegawai" },
 ];
 
 const MEDAL = ["#ffcb05", "#c0c6ce", "#c2803f"];
@@ -33,12 +30,12 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
   const [sortKey, setSortKey] = useState<SortKey>("totalPoints");
   const [asc, setAsc] = useState(false);
   const [q, setQ] = useState("");
-  const [persona, setPersona] = useState("all");
+  const [org, setOrg] = useState("all");
   const [selected, setSelected] = useState<EmployeeStat | null>(null);
   const [page, setPage] = useState(1);
 
   // reset ke halaman 1 saat filter/sort berubah
-  useEffect(() => setPage(1), [q, persona, sortKey, asc]);
+  useEffect(() => setPage(1), [q, org, sortKey, asc]);
 
   const rankMap = useMemo(() => {
     const m = new Map<string, number>();
@@ -54,15 +51,15 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
         !q ||
         s.emp.name.toLowerCase().includes(q.toLowerCase()) ||
         s.emp.unit.toLowerCase().includes(q.toLowerCase());
-      const matchP = persona === "all" || s.persona === persona;
-      return matchQ && matchP;
+      const matchOrg = org === "all" || (org === "pln" ? s.isPln : !s.isPln);
+      return matchQ && matchOrg;
     });
     r = [...r].sort((a, b) => {
       const d = (a[sortKey] as number) - (b[sortKey] as number);
       return asc ? d : -d;
     });
     return r;
-  }, [stats, q, persona, sortKey, asc]);
+  }, [stats, q, org, sortKey, asc]);
 
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -100,13 +97,13 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
         </CardHeader>
 
         <div className="flex flex-wrap gap-1 px-5 pb-3">
-          {PERSONAS.map((p) => (
+          {ORGS.map((p) => (
             <button
               key={p.key}
-              onClick={() => setPersona(p.key)}
+              onClick={() => setOrg(p.key)}
               className={cn(
                 "rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors",
-                persona === p.key
+                org === p.key
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:text-foreground"
               )}
@@ -122,7 +119,6 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
               <tr className="border-y border-border text-[10px] uppercase tracking-wider text-muted-foreground">
                 <th className="w-14 px-4 py-2.5 text-left font-semibold">#</th>
                 <th className="px-2 py-2.5 text-left font-semibold">Pegawai</th>
-                <th className="px-2 py-2.5 text-left font-semibold">Tier</th>
                 {COLS.map((c) => (
                   <th
                     key={c.key}
@@ -183,20 +179,18 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                               </span>
                             )}
                           </div>
-                          <div className="truncate text-[11px] text-muted-foreground">
-                            {s.emp.unit} · {s.emp.office}
+                          <div className="flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
+                            <span className={cn("shrink-0 rounded px-1 text-[9px] font-semibold", s.isPln ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>
+                              {s.isPln ? "PLN" : "Non"}
+                            </span>
+                            <span className="truncate">{s.emp.unit || "-"}</span>
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-2 py-2.5">
-                      <TierBadge tier={s.tier} />
-                    </td>
-                    <td className={cn("tabular px-3 py-2.5 text-right", noScore ? "text-muted-foreground" : "text-[hsl(var(--success))]")}>{fmt(floors)}</td>
-                    <td className="tabular px-3 py-2.5 text-right text-muted-foreground">{fmt(trips)}</td>
                     <td className="px-3 py-2.5 text-right">
-                      <span className="tabular inline-flex items-center gap-1 text-[hsl(var(--warning))]">
-                        {s.currentStreak > 0 && <Flame className="h-3 w-3" />}
+                      <span className="tabular inline-flex items-center gap-1 text-base font-bold text-[hsl(var(--warning))]">
+                        {s.currentStreak > 0 && <Flame className="h-5 w-5" />}
                         {s.currentStreak}
                       </span>
                     </td>
@@ -211,6 +205,8 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                         </span>
                       </div>
                     </td>
+                    <td className={cn("tabular px-3 py-2.5 text-right", noScore ? "text-muted-foreground" : "text-[hsl(var(--success))]")}>{fmt(floors)}</td>
+                    <td className="tabular px-3 py-2.5 text-right text-muted-foreground">{fmt(trips)}</td>
                   </tr>
                 );
               })}

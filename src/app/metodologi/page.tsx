@@ -11,7 +11,6 @@ import {
   SEC_PER_FLOOR_MAX,
   CHECKPOINT_ZONE,
   IMPACT,
-  ANTHRO_ID,
   LEVELS,
 } from "@/lib/config";
 import { ArrowLeft, BookOpen } from "lucide-react";
@@ -115,7 +114,7 @@ export default async function MetodologiPage() {
             <div className="mt-3">
               <F>{`RAW TAP (taps.json)
    → [1] Deteksi sesi tangga (rangkai tap berurutan)
-   → [2] Cek check-in harian (lewati LT1→LT4 penuh) → tentukan hari berpoin
+   → [2] Cek check-in harian (NAIK LT1→LT2→LT3→LT4) → tentukan hari berpoin
    → [3] Skoring poin (koefisien progresif per-trip)
    → [4] Agregasi per pegawai / per hari / org
    → [5] KPI + Dampak (energi, emisi, kalori)`}</F>
@@ -126,7 +125,7 @@ export default async function MetodologiPage() {
         {/* 1. Sumber data */}
         <Section n="1" title="Sumber Data">
           <Row k="Tap RFID (taps.json)" v="tiap tap = 1 checkpoint lantai · field: waktu, id pegawai, lantai, device, kind (stair/lift)" />
-          <Row k="Pegawai (employees.json)" v="id, nama, unit, gender, berat, tinggi, kantor, parkir, persona" />
+          <Row k="Pegawai" v="id/NIP, nama, unit (organisasi: PLN / TAD / ICON …), nomor kartu" />
           <Row k="Peta lantai (doors-by-floor.json)" v="dari Door Config Report — 159 reader, mencakup B2 s/d LT15" />
           <Row k="Rentang data" v="bulan berjalan (mulai tgl 1)" />
           <p className="pt-1">
@@ -159,11 +158,11 @@ export default async function MetodologiPage() {
 Jeda > ${SEC_PER_FLOOR_MAX} detik  →  sesi PUTUS, mulai sesi baru`}</F>
           <p>
             <b className="text-foreground">Aturan check-in:</b> pegawai wajib{" "}
-            <b className="text-pln-gold">melewati seluruh {CHECKPOINT_ZONE.join("→")}</b> dalam satu sesi (tap{" "}
-            {CHECKPOINT_ZONE.join("-")} atau sebaliknya) minimal sekali (biasanya saat datang pagi). Sekadar menyentuh
-            tepi zona (mis. B1→LT1) belum dianggap check-in. <b className="text-foreground">Setelah check-in, SEMUA sesi
-            tangga hari itu dapat poin</b> — termasuk gerakan antar-lantai atas (mis. LT7→LT9), tanpa harus lewat LT1–LT4
-            lagi. Hari <b className="text-foreground">tanpa check-in → tidak ada poin</b>.
+            <b className="text-pln-gold">NAIK melewati seluruh {CHECKPOINT_ZONE.join("→")}</b> dalam satu sesi (tapping{" "}
+            {CHECKPOINT_ZONE.join("-")}) minimal sekali (biasanya saat datang pagi). Hanya arah <b>NAIK</b> yang dihitung
+            sebagai check-in — <b>turun</b> (4→1) tidak. <b className="text-foreground">Setelah check-in, SEMUA sesi
+            tangga hari itu dapat poin</b> (termasuk sesi turun & gerakan antar-lantai atas seperti LT7→LT9). Hari{" "}
+            <b className="text-foreground">tanpa check-in → tidak ada poin</b>.
           </p>
         </Section>
 
@@ -172,16 +171,16 @@ Jeda > ${SEC_PER_FLOOR_MAX} detik  →  sesi PUTUS, mulai sesi baru`}</F>
           <F>{`Per pegawai, per hari. Sesi diurut waktu.
 C = akumulasi lantai NAIK hari itu (mulai 0)
 
-NAIK  n lantai → koef = tier(C + n) ; poin = n × ${POINTS_UP_PER_FLOOR} × koef ; lalu C += n
-TURUN m lantai → koef = tier(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR} × koef`}</F>
+NAIK  n lantai → koef = koefisien(C + n) ; poin = n × ${POINTS_UP_PER_FLOOR} × koef ; lalu C += n
+TURUN m lantai → koef = koefisien(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR} × koef`}</F>
           <div className="pt-1">
             <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Tier koefisien (dari lantai naik kumulatif harian)
+              Koefisien harian (dari lantai naik kumulatif harian)
             </div>
             <table className="w-full text-[11px]">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="py-1 font-semibold">Tier</th>
+                  <th className="py-1 font-semibold">Badge</th>
                   <th className="py-1 text-right font-semibold">Lantai naik/hari</th>
                   <th className="py-1 text-right font-semibold">Koefisien</th>
                 </tr>
@@ -198,21 +197,21 @@ TURUN m lantai → koef = tier(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR} × 
             </table>
           </div>
           <p className="pt-1 text-[11px]">
-            <b className="text-foreground">Contoh:</b> naik LT1→LT12 saat C sudah 12 → koef tier(23)=×1,8 → 11 × {POINTS_UP_PER_FLOOR} × 1,8 ={" "}
+            <b className="text-foreground">Contoh:</b> naik LT1→LT12 saat C sudah 12 → koefisien(23)=×1,8 → 11 × {POINTS_UP_PER_FLOOR} × 1,8 ={" "}
             {fmt(11 * POINTS_UP_PER_FLOOR * 1.8)} poin.
           </p>
         </Section>
 
-        {/* 4. Level pegawai */}
-        <Section n="4" title="Level Pegawai (badge leaderboard)" sub="BEDA dari koefisien harian.">
-          <F>{`Level = tier( rata-rata lantai naik / hari aktif )
+        {/* 4. Badge pegawai */}
+        <Section n="4" title="Badge Pegawai (di leaderboard & detail)" sub="BEDA dari koefisien harian.">
+          <F>{`Badge = fungsi( rata-rata lantai naik / hari aktif )
         dengan GUARD konsistensi:
         1 hari aktif → maks Bronze · 2 → Silver · 3 → Gold
         4 → Platinum · 5+ → Champion`}</F>
           <table className="w-full text-[11px]">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="py-1 font-semibold">Level</th>
+                <th className="py-1 font-semibold">Badge</th>
                 <th className="py-1 text-right font-semibold">Rata-rata lantai naik/hari</th>
               </tr>
             </thead>
@@ -226,7 +225,7 @@ TURUN m lantai → koef = tier(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR} × 
             </tbody>
           </table>
           <p className="text-[11px]">
-            Guard mencegah &quot;1 hari banyak naik → langsung Champion&quot;. Level butuh konsistensi hari aktif.
+            Guard mencegah &quot;1 hari banyak naik → langsung Champion&quot;. Badge butuh konsistensi hari aktif.
           </p>
         </Section>
 
@@ -262,7 +261,7 @@ TURUN m lantai → koef = tier(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR} × 
                 <td className="tabular py-1.5 text-right">{fmt(k.liftRidesAvoided)}</td>
               </tr>
               <tr className="border-b border-border/50">
-                <td className="py-1.5 pr-2">CO₂ Ditekan</td>
+                <td className="py-1.5 pr-2">CO₂ Dihindari</td>
                 <td className="py-1.5 pr-2 text-muted-foreground">sesi × {IMPACT.liftWhPerTrip} Wh × {IMPACT.gridEfKgPerKwh} (lihat Bagian 6)</td>
                 <td className="tabular py-1.5 text-right">{fmt(k.co2KgAvoided, 2)} kg</td>
               </tr>
@@ -285,10 +284,10 @@ TURUN m lantai → koef = tier(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR} × 
           </p>
 
           <div className="pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">B. Emisi CO₂</div>
-          <F>{`Energi  = jumlah perjalanan × ${IMPACT.liftWhPerTrip} Wh
-Emisi   = Energi (kWh) × ${IMPACT.gridEfKgPerKwh} kg CO₂/kWh
-        = ${fmt(k.liftRidesAvoided)} × ${IMPACT.liftWhPerTrip} Wh × ${IMPACT.gridEfKgPerKwh}
-        = ${fmt(k.energyKwhAvoided, 2)} kWh → ${fmt(k.co2KgAvoided, 2)} kg CO₂`}</F>
+          <F>{`Energi (kWh) = jumlah perjalanan × ${IMPACT.liftWhPerTrip} Wh ÷ 1000   ← konversi Wh → kWh
+             = ${fmt(k.liftRidesAvoided)} × ${IMPACT.liftWhPerTrip} ÷ 1000 = ${fmt(k.energyKwhAvoided, 2)} kWh
+Emisi        = Energi (kWh) × ${IMPACT.gridEfKgPerKwh} kg CO₂/kWh
+             = ${fmt(k.energyKwhAvoided, 2)} × ${IMPACT.gridEfKgPerKwh} = ${fmt(k.co2KgAvoided, 2)} kg CO₂`}</F>
           <Row k="20 Wh/perjalanan" v={<span>ACEEE (Sachs 2005): 1.900 kWh/th ÷ 100.000 trip ≈ 19 Wh</span>} />
           <Row k={`${IMPACT.gridEfKgPerKwh} kg CO₂/kWh`} v="proyeksi emisi grid nasional 2025 (773 g/kWh; turun s/d 2060)" />
 
@@ -296,23 +295,23 @@ Emisi   = Energi (kWh) × ${IMPACT.gridEfKgPerKwh} kg CO₂/kWh
           <F>{`Naik  : Σ (lantai × berat) × ${IMPACT.kcalPerKgFloorUp} kcal/kg/lantai = ${fmt(k.caloriesUp)} kcal
 Turun : Σ (lantai × berat) × ${IMPACT.kcalPerKgFloorDown} kcal/kg/lantai = ${fmt(k.caloriesDown)} kcal
 Total = ${fmt(k.calories)} kkal`}</F>
-          <Row k="Berat badan" v={`Kemenkes AKG 2019 — L ${ANTHRO_ID.male.weight} kg, P ${ANTHRO_ID.female.weight} kg`} />
+          <Row k="Berat badan" v={`tetap ${IMPACT.avgBodyWeightKg} kg untuk semua peserta (tanpa membedakan gender)`} />
         </Section>
 
         {/* 7. Grafik */}
         <Section n="7" title="Grafik &amp; Visual">
-          <Row k="Tren Bulan Berjalan" v="Poin, Lantai Naik, Lantai Turun per hari (toggle 'Hari Ini' = per jam hari terakhir)" />
+          <Row k="Tren Bulan Berjalan" v="bar Poin (sumbu kiri) + garis Lantai Naik/Turun (sumbu kanan) per hari; toggle 'Hari Ini' = per jam tanggal berjalan" />
           <Row k="Distribusi Jam" v="jumlah sesi tangga NAIK vs TURUN per jam" />
           <Row k="Peta Vertikal Gedung" v={`jumlah tap tangga per lantai (${LEVELS[0]}–${LEVELS[LEVELS.length - 1]}); zona ${CHECKPOINT_ZONE.join("–")} disorot`} />
-          <Row k="Distribusi Level" v="jumlah pegawai aktif per level (lihat Bagian 4)" />
-          <Row k="Leaderboard" v="urut poin; kolom Trip Tangga = jumlah sesi valid; Streak = hari aktif beruntun" />
+          <Row k="Distribusi Badge" v="jumlah pegawai aktif per badge (lihat Bagian 4)" />
+          <Row k="Leaderboard" v="urut poin; filter Pegawai PLN / Non-Pegawai; Streak = hari-kerja aktif beruntun" />
         </Section>
 
         {/* 8. Referensi */}
         <Section n="8" title="Referensi &amp; Sumber Resmi">
           <Row k="Energi lift (20 Wh/perjalanan)" v="ACEEE — Sachs, H. (2005), Opportunities for Elevator Energy Efficiency Improvements" />
           <Row k="Faktor emisi (0,773 kg/kWh)" v="proyeksi emisi grid nasional 2025 — 773 g/kWh (−6% 2030 · −37% 2040 · −75% 2050 · −100% 2060)" />
-          <Row k="Berat/tinggi badan" v="Kemenkes AKG 2019 (Permenkes No. 28/2019)" />
+          <Row k="Berat badan (asumsi)" v={`${IMPACT.avgBodyWeightKg} kg untuk semua peserta`} />
           <Row k="Peta lantai gedung" v="Door Config Report (159 reader, B2–LT15)" />
           <Row k="Metode energi lift" v="ISO 25745-2:2015 (kerangka running + standby)" />
         </Section>

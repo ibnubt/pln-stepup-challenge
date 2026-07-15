@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, SectionLabel } from "@/components/ui/card";
-import { IMPACT, ANTHRO_ID } from "@/lib/config";
+import { IMPACT } from "@/lib/config";
 import type { ScoreResult } from "@/lib/scoring";
 import { fmt } from "@/lib/utils";
 import { Leaf, Flame, ArrowDownUp, Car, Utensils } from "lucide-react";
@@ -37,7 +37,7 @@ export function ImpactCard({ kpi }: { kpi: ScoreResult["kpi"] }) {
     {
       icon: Leaf,
       accent: "152 62% 40%",
-      title: "Emisi CO₂ Ditekan",
+      title: "Emisi CO₂ Dihindari",
       big: fmt(kpi.co2KgAvoided, 2),
       bigUnit: "kg CO₂",
       metrics: [
@@ -45,7 +45,7 @@ export function ImpactCard({ kpi }: { kpi: ScoreResult["kpi"] }) {
         ["Energi per perjalanan lift", `${IMPACT.liftWhPerTrip} Wh`],
         ["Faktor emisi grid (2025)", `${IMPACT.gridEfKgPerKwh} kg/kWh`],
       ],
-      note: `Energi ~${IMPACT.liftWhPerTrip} Wh/perjalanan — ACEEE/Sachs 2005 (Enermodal 2004): 1.900 kWh/th ÷ 100.000 trip ≈ 19 Wh. Faktor emisi ${IMPACT.gridEfKgPerKwh} kg/kWh = proyeksi grid nasional 2025 (773 g/kWh). Emisi = perjalanan × ${IMPACT.liftWhPerTrip} Wh → kWh × ${IMPACT.gridEfKgPerKwh}.`,
+      note: `Energi ~${IMPACT.liftWhPerTrip} Wh/perjalanan — ACEEE (Sachs 2005): 1.900 kWh/th ÷ 100.000 trip ≈ 19 Wh. Energi (kWh) = perjalanan × ${IMPACT.liftWhPerTrip} Wh ÷ 1000. Faktor emisi ${IMPACT.gridEfKgPerKwh} kg/kWh = proyeksi grid nasional 2025 (773 g/kWh). Emisi = energi (kWh) × ${IMPACT.gridEfKgPerKwh}.`,
       highlight: { icon: Car, text: `Setara ${fmt(carKm, 1)} km berkendara mobil` },
     },
     {
@@ -58,7 +58,7 @@ export function ImpactCard({ kpi }: { kpi: ScoreResult["kpi"] }) {
         ["Dari naik tangga", `${fmt(kpi.caloriesUp)} kcal`],
         ["Dari turun tangga", `${fmt(kpi.caloriesDown)} kcal`],
       ],
-      note: `Pakai berat rata-rata orang Indonesia — L ${ANTHRO_ID.male.weight} kg, P ${ANTHRO_ID.female.weight} kg (${ANTHRO_ID.source}).`,
+      note: `Pakai berat badan tetap ${IMPACT.avgBodyWeightKg} kg untuk semua peserta (tanpa membedakan gender).`,
       highlight: { icon: Utensils, text: `Setara ${fmt(nasi)} porsi nasi · ${fmt(lariMenit)} menit lari` },
     },
   ];
@@ -72,11 +72,11 @@ export function ImpactCard({ kpi }: { kpi: ScoreResult["kpi"] }) {
     { op: "×" },
     { label: "Energi / perjalanan", value: `${IMPACT.liftWhPerTrip} Wh`, detail: `${IMPACT.liftWhPerTripNote} · lift ${IMPACT.liftCapacityKg} kg`, tone: "factor" },
     { op: "=" },
-    { label: "Total energi lift", value: `${fmt(kpi.energyKwhAvoided, 2)} kWh`, detail: `${fmt(kpi.liftRidesAvoided)} × ${IMPACT.liftWhPerTrip} Wh`, tone: "mid" },
+    { label: "Total energi lift", value: `${fmt(kpi.energyKwhAvoided, 2)} kWh`, detail: `${fmt(kpi.liftRidesAvoided)} × ${IMPACT.liftWhPerTrip} Wh ÷ 1000`, tone: "mid" },
     { op: "×" },
     { label: "Faktor emisi grid", value: `${IMPACT.gridEfKgPerKwh}`, detail: `kg CO₂/kWh · ${IMPACT.gridEfSource}`, tone: "factor" },
     { op: "=" },
-    { label: "Emisi CO₂ ditekan", value: `${fmt(kpi.co2KgAvoided, 2)} kg`, detail: "hasil akhir", tone: "out" },
+    { label: "Emisi CO₂ dihindari", value: `${fmt(kpi.co2KgAvoided, 2)} kg`, detail: "hasil akhir", tone: "out" },
   ];
   const toneColor = {
     in: "hsl(199 89% 55%)",

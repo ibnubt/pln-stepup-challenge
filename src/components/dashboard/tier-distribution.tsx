@@ -14,8 +14,8 @@ export function TierDistribution({ stats }: { stats: EmployeeStat[] }) {
     <Card className="animate-fade-in">
       <CardHeader>
         <CardTitle>
-          <SectionLabel>Sebaran Level</SectionLabel>
-          <h3 className="text-sm font-semibold">Distribusi Level Pegawai</h3>
+          <SectionLabel>Sebaran Badge</SectionLabel>
+          <h3 className="text-sm font-semibold">Distribusi Badge Pegawai</h3>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2.5">
@@ -35,7 +35,7 @@ export function TierDistribution({ stats }: { stats: EmployeeStat[] }) {
           </div>
         ))}
         <p className="pt-1 text-[10px] text-muted-foreground">
-          Level = rata-rata lantai naik / hari aktif (beda dari koefisien harian).
+          Badge = rata-rata lantai naik / hari aktif (beda dari koefisien harian).
         </p>
       </CardContent>
     </Card>

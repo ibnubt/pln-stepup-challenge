@@ -45,12 +45,12 @@ export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
       tip: `Tiap sesi tangga (naik/turun) = 1 perjalanan lift yang dihindari. Total ${fmt(kpi.liftRidesAvoided)} perjalanan lift 800 kg tak perlu jalan.`,
     },
     {
-      label: "CO₂ Ditekan",
+      label: "CO₂ Dihindari",
       value: `${fmt(kpi.co2KgAvoided, 2)} kg`,
       sub: `${fmt(kpi.energyKwhAvoided, 2)} kWh listrik lift tak terpakai`,
       icon: Leaf,
       accent: "152 62% 40%",
-      tip: "(perjalanan lift dihindari × ~20 Wh/perjalanan, lift 800 kg traksi — ACEEE 2005) = energi (kWh), lalu × faktor emisi grid 0,773 kg CO₂/kWh (proyeksi grid nasional 2025).",
+      tip: "(perjalanan lift dihindari × ~20 Wh/perjalanan ÷ 1000 → kWh) × faktor emisi grid 0,773 kg CO₂/kWh (proyeksi grid nasional 2025). Sumber energi: ACEEE 2005.",
     },
     {
       label: "Kalori Terbakar",
@@ -58,7 +58,7 @@ export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
       sub: `↑${fmt(kpi.caloriesUp)} naik · ↓${fmt(kpi.caloriesDown)} turun kcal`,
       icon: Flame,
       accent: "24 90% 55%",
-      tip: "Berbasis berat badan tiap pegawai: naik 0.11 kcal/kg/lantai, turun 0.045 kcal/kg/lantai.",
+      tip: "Berbasis berat badan tetap 60 kg (tanpa bedakan gender): naik 0.11 kcal/kg/lantai, turun 0.045 kcal/kg/lantai.",
     },
   ];
 

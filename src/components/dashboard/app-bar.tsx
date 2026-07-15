@@ -2,9 +2,10 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LogoutButton } from "@/components/ui/logout-button";
 import { LiveIndicator } from "@/components/dashboard/live-indicator";
-import { CalendarRange, BookOpen } from "lucide-react";
+import { MonthSelector } from "@/components/dashboard/month-selector";
+import { BookOpen } from "lucide-react";
 
-export function AppBar({ period }: { period: string }) {
+export function AppBar({ month, availableMonths }: { month: string; availableMonths: string[] }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between gap-4">
@@ -26,9 +27,8 @@ export function AppBar({ period }: { period: string }) {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="hidden items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-muted-foreground sm:flex">
-            <CalendarRange className="h-3.5 w-3.5 text-primary" />
-            <span className="font-medium text-foreground">{period}</span>
+          <div className="hidden sm:flex">
+            <MonthSelector month={month} available={availableMonths} />
           </div>
           <LiveIndicator intervalSec={Number(process.env.DASHBOARD_REFRESH_SEC) || 15} />
           <Link

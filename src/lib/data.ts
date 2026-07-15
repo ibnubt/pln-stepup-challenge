@@ -11,14 +11,14 @@ import { computeScores, type Tap, type Employee } from "./scoring";
 const IS_DB = process.env.DATA_SOURCE === "db";
 const TTL_MS = IS_DB ? Number(process.env.DASHBOARD_TTL_SEC || 10) * 1000 : Infinity;
 
-let cache: { at: number; result: ReturnType<typeof computeScores> } | null = null;
+// cache data mentah (TTL) + cache skor per-bulan (dihitung ulang saat data mentah refresh)
+let rawCache: { at: number; taps: Tap[]; employees: Employee[] } | null = null;
+const scoreCache = new Map<string, { rawAt: number; result: ReturnType<typeof computeScores> }>();
 
-export async function getScores() {
-  if (cache && Date.now() - cache.at < TTL_MS) return cache.result;
-
+async function loadRaw() {
+  if (rawCache && Date.now() - rawCache.at < TTL_MS) return rawCache;
   let taps: Tap[];
   let employees: Employee[];
-
   if (IS_DB) {
     try {
       const { loadFromDb } = await import("./db");
@@ -26,15 +26,24 @@ export async function getScores() {
     } catch (e) {
       // DB error (mis. koneksi penuh/transien) → sajikan data terakhir bila ada,
       // jangan bikin halaman crash ("server-side exception").
-      if (cache) return cache.result;
+      if (rawCache) return rawCache;
       throw e;
     }
   } else {
     taps = tapsRaw as Tap[];
     employees = employeesRaw as Employee[];
   }
+  rawCache = { at: Date.now(), taps, employees };
+  return rawCache;
+}
 
-  const result = computeScores(taps, employees);
-  cache = { at: Date.now(), result };
+/** month = "YYYY-MM" (opsional). Default: bulan berjalan. */
+export async function getScores(month?: string) {
+  const raw = await loadRaw();
+  const key = month || "current";
+  const cached = scoreCache.get(key);
+  if (cached && cached.rawAt === raw.at) return cached.result; // valid selama data mentah belum refresh
+  const result = computeScores(raw.taps, raw.employees, month ? { month } : undefined);
+  scoreCache.set(key, { rawAt: raw.at, result });
   return result;
 }
