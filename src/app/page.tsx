@@ -25,8 +25,11 @@ export default async function DashboardPage() {
   // tak jadi baris serba-nol di leaderboard.
   const ranked = s.employeeStats.filter((e) => e.activeDays > 0);
 
-  const first = s.byDate[0]?.date ?? s.today;
-  const period = `${Number(first.split("-")[2])}–${labelDate(s.today)}`;
+  // Periode "Bulan Berjalan" = tanggal 1 s/d HARI INI (WIB), lepas dari ada/tidaknya data.
+  // (dulu diambil dari rentang tanggal DATA → mandek "14–14" saat data hari ini belum masuk)
+  const nowWib = new Date(Date.now() + 7 * 3600 * 1000); // WIB = UTC+7
+  const todayStr = `${nowWib.getUTCFullYear()}-${String(nowWib.getUTCMonth() + 1).padStart(2, "0")}-${String(nowWib.getUTCDate()).padStart(2, "0")}`;
+  const period = `1–${labelDate(todayStr)}`; // mis. "1–15 Jul 2026"
 
   return (
     <div className="min-h-screen">
