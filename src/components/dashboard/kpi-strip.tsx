@@ -23,10 +23,10 @@ export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
     {
       label: "Lantai Naik",
       value: fmt(kpi.upFloors),
-      sub: `${fmt(kpi.downFloors)} lantai turun · ${Math.round(kpi.stairShare * 100)}% gerakan pakai tangga`,
+      sub: `${fmt(kpi.downFloors)} lantai turun`,
       icon: TrendingUp,
       accent: "152 62% 40%",
-      tip: "Total segmen antar-lantai yang ditempuh via tangga (sesi valid). LT1→LT4 = 3 lantai. '% gerakan pakai tangga' = share tangga = trip tangga ÷ (trip tangga + trip lift).",
+      tip: "Total segmen antar-lantai yang ditempuh via tangga (sesi valid). LT1→LT4 = 3 lantai.",
     },
     {
       label: "Total Poin",

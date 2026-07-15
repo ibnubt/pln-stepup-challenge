@@ -109,11 +109,27 @@ export const PERSONA_LABEL: Record<string, string> = {
   rare: "Jarang",
 };
 export const PERSONA_DESC: Record<string, string> = {
-  champion: "Hampir selalu pilih tangga",
-  regular: "Sering pakai tangga",
-  occasional: "Kadang-kadang pakai tangga",
-  rare: "Jarang pakai tangga",
+  champion: "Streak hari-kerja 7+ (Pegiat Tangga)",
+  regular: "Streak hari-kerja 5–6 (Rutin)",
+  occasional: "Streak hari-kerja 3–4 (Kadang)",
+  rare: "Streak hari-kerja 1–2 (Jarang)",
 };
+
+// Hari libur nasional (WIB) — weekend (Sabtu/Minggu) otomatis libur.
+// Tambahkan tanggal cuti/libur nasional "YYYY-MM-DD" di sini bila perlu.
+export const HOLIDAYS = new Set<string>([
+  // contoh: "2026-01-01", "2026-03-19",
+]);
+
+// Persona = kebiasaan, dihitung dari STREAK HARI-KERJA aktif terpanjang
+// (hari libur tidak dihitung & tidak memutus streak). Ambang kelipatan 2:
+//   Jarang 1–2 · Kadang 3–4 · Rutin 5–6 · Pegiat 7+
+export function personaForStreak(streak: number): string {
+  if (streak >= 7) return "champion"; // Pegiat Tangga
+  if (streak >= 5) return "regular"; // Rutin
+  if (streak >= 3) return "occasional"; // Kadang
+  return "rare"; // 0–2 → Jarang
+}
 
 // ============================================================================
 // PARAMETER DAMPAK LIFT — model ISO 25745-2 (per-perjalanan)

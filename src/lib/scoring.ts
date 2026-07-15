@@ -14,6 +14,8 @@ import {
   POINTS_DOWN_PER_FLOOR,
   SEC_PER_FLOOR_MIN,
   SEC_PER_FLOOR_MAX,
+  HOLIDAYS,
+  personaForStreak,
   type Tier,
 } from "./config";
 
@@ -62,6 +64,20 @@ export interface Session {
 
 const ms = (t: string) => new Date(t).getTime();
 const dateKey = (t: string) => t.slice(0, 10);
+
+// —— hari libur: weekend (Sabtu/Minggu) atau libur nasional (HOLIDAYS) ——
+const isHoliday = (d: string) => {
+  const wd = new Date(d + "T00:00:00Z").getUTCDay(); // 0=Min .. 6=Sab
+  return wd === 0 || wd === 6 || HOLIDAYS.has(d);
+};
+// tanggal hari-KERJA berikutnya setelah `d` (lompati semua hari libur)
+const nextWorkday = (d: string) => {
+  const dt = new Date(d + "T00:00:00Z");
+  do {
+    dt.setUTCDate(dt.getUTCDate() + 1);
+  } while (isHoliday(dt.toISOString().slice(0, 10)));
+  return dt.toISOString().slice(0, 10);
+};
 
 function groupBy<T>(arr: T[], key: (x: T) => string): Map<string, T[]> {
   const m = new Map<string, T[]>();
@@ -182,6 +198,7 @@ export interface EmployeeStat {
   stairShare: number; // 0..1 (tangga / total trip vertikal)
   currentStreak: number;
   longestStreak: number;
+  persona: string; // kebiasaan dari streak hari-kerja terpanjang (champion/regular/occasional/rare)
   tier: Tier; // berdasarkan rata2 lantai naik/hari
   days: DayStat[];
   sessions: Session[]; // seluruh sesi (untuk detail + jejak lantai)
@@ -227,16 +244,17 @@ export interface ScoreResult {
   };
 }
 
+// Streak = hari-KERJA aktif berturut-turut. Hari libur (weekend/nasional) TIDAK
+// dihitung & tidak memutus streak (mis. aktif Jumat lalu Senin = tetap nyambung).
 function streaks(dates: string[]): { current: number; longest: number } {
-  if (!dates.length) return { current: 0, longest: 0 };
-  const uniq = Array.from(new Set(dates)).sort();
+  const uniq = Array.from(new Set(dates))
+    .filter((d) => !isHoliday(d)) // aktivitas di hari libur tak dihitung
+    .sort();
+  if (!uniq.length) return { current: 0, longest: 0 };
   let longest = 1;
   let run = 1;
   for (let i = 1; i < uniq.length; i++) {
-    const prev = new Date(uniq[i - 1]);
-    const cur = new Date(uniq[i]);
-    const diff = Math.round((cur.getTime() - prev.getTime()) / 86400000);
-    run = diff === 1 ? run + 1 : 1;
+    run = nextWorkday(uniq[i - 1]) === uniq[i] ? run + 1 : 1; // hari-kerja berturut?
     longest = Math.max(longest, run);
   }
   return { current: run, longest };
@@ -322,6 +340,7 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
       stairShare: stairTrips + liftTrips ? stairTrips / (stairTrips + liftTrips) : 0,
       currentStreak: current,
       longestStreak: longest,
+      persona: personaForStreak(longest), // dari streak hari-kerja terpanjang
       tier: levelFor(avgUp, activeDays),
       days,
       sessions: allEmpSess.slice().sort((a, b) => (a.time < b.time ? -1 : 1)),

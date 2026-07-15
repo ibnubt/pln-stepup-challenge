@@ -10,12 +10,11 @@ import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Flame, Medal
 
 const PAGE_SIZE = 10;
 
-type SortKey = "totalPoints" | "upFloors" | "stairTrips" | "stairShare" | "currentStreak" | "activeDays";
+type SortKey = "totalPoints" | "upFloors" | "stairTrips" | "currentStreak" | "activeDays";
 
 const COLS: { key: SortKey; label: string; align?: "right" }[] = [
   { key: "upFloors", label: "Lantai Naik", align: "right" },
   { key: "stairTrips", label: "Trip Tangga", align: "right" },
-  { key: "stairShare", label: "Share Tangga", align: "right" },
   { key: "currentStreak", label: "Streak", align: "right" },
   { key: "totalPoints", label: "Poin", align: "right" },
 ];
@@ -55,7 +54,7 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
         !q ||
         s.emp.name.toLowerCase().includes(q.toLowerCase()) ||
         s.emp.unit.toLowerCase().includes(q.toLowerCase());
-      const matchP = persona === "all" || s.emp.persona === persona;
+      const matchP = persona === "all" || s.persona === persona;
       return matchQ && matchP;
     });
     r = [...r].sort((a, b) => {
@@ -195,14 +194,6 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                     </td>
                     <td className={cn("tabular px-3 py-2.5 text-right", noScore ? "text-muted-foreground" : "text-[hsl(var(--success))]")}>{fmt(floors)}</td>
                     <td className="tabular px-3 py-2.5 text-right text-muted-foreground">{fmt(trips)}</td>
-                    <td className="px-3 py-2.5 text-right">
-                      <span className="tabular inline-flex items-center gap-1.5">
-                        <span className="hidden h-1.5 w-10 overflow-hidden rounded-full bg-muted sm:inline-block">
-                          <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.round(s.stairShare * 100)}%` }} />
-                        </span>
-                        {Math.round(s.stairShare * 100)}%
-                      </span>
-                    </td>
                     <td className="px-3 py-2.5 text-right">
                       <span className="tabular inline-flex items-center gap-1 text-[hsl(var(--warning))]">
                         {s.currentStreak > 0 && <Flame className="h-3 w-3" />}

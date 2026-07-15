@@ -257,11 +257,6 @@ TURUN m lantai → koef = tier(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR} × 
                 <td className="tabular py-1.5 text-right">{fmt(k.totalPoints)}</td>
               </tr>
               <tr className="border-b border-border/50">
-                <td className="py-1.5 pr-2">Share Tangga</td>
-                <td className="py-1.5 pr-2 text-muted-foreground">trip tangga ÷ (trip tangga + trip lift)</td>
-                <td className="tabular py-1.5 text-right">{Math.round(k.stairShare * 100)}%</td>
-              </tr>
-              <tr className="border-b border-border/50">
                 <td className="py-1.5 pr-2">Lift Dihindari</td>
                 <td className="py-1.5 pr-2 text-muted-foreground">jumlah sesi tangga berpoin (hari check-in) <span className="text-[hsl(var(--warning))]">(per-sesi, batas atas)</span></td>
                 <td className="tabular py-1.5 text-right">{fmt(k.liftRidesAvoided)}</td>

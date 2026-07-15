@@ -228,9 +228,9 @@ export function EmployeeDrawer({
                 </span>
                 <span
                   className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-                  title={PERSONA_DESC[e.persona]}
+                  title={PERSONA_DESC[stat.persona]}
                 >
-                  {PERSONA_LABEL[e.persona] ?? e.persona}
+                  {PERSONA_LABEL[stat.persona] ?? stat.persona}
                 </span>
               </div>
             </div>
@@ -253,7 +253,6 @@ export function EmployeeDrawer({
             <Stat icon={CalendarCheck} label="Hari Aktif" value={`${stat.activeDays}`} />
             <Stat icon={Flame} label="Streak Terbaik" value={`${stat.longestStreak} hari`} tone="text-[hsl(var(--warning))]" />
             <Stat icon={Footprints} label="Trip Tangga" value={fmt(noScore ? stat.stairTripsRaw : stat.stairTrips)} />
-            <Stat icon={Gauge} label="Share Tangga" value={`${Math.round(stat.stairShare * 100)}%`} />
           </div>
 
           <div className="mt-5">
