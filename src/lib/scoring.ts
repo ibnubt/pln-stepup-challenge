@@ -373,8 +373,10 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
     else hourly[s.hour].down += 1;
   }
 
-  // --- hari ini (tanggal terakhir) + tren per jam ---
-  const today = byDate.length ? byDate[byDate.length - 1].date : "";
+  // --- HARI INI: ikut tanggal KALENDER (WIB), bukan hari data terakhir ---
+  // (kalau belum ada tap hari ini, chart "Hari Ini" tampil kosong dgn tanggal hari ini)
+  const nowWib = new Date(Date.now() + 7 * 3600 * 1000); // WIB = UTC+7
+  const today = `${nowWib.getUTCFullYear()}-${String(nowWib.getUTCMonth() + 1).padStart(2, "0")}-${String(nowWib.getUTCDate()).padStart(2, "0")}`;
   const todayHourly: HourStat[] = Array.from({ length: 24 }, (_, hour) => ({
     hour,
     points: 0,
