@@ -295,7 +295,7 @@ Emisi        = Energi (kWh) × ${IMPACT.gridEfKgPerKwh} kg CO₂/kWh
           <F>{`Naik  : Σ (lantai × berat) × ${IMPACT.kcalPerKgFloorUp} kcal/kg/lantai = ${fmt(k.caloriesUp)} kcal
 Turun : Σ (lantai × berat) × ${IMPACT.kcalPerKgFloorDown} kcal/kg/lantai = ${fmt(k.caloriesDown)} kcal
 Total = ${fmt(k.calories)} kkal`}</F>
-          <Row k="Berat badan" v={`tetap ${IMPACT.avgBodyWeightKg} kg untuk semua peserta (tanpa membedakan gender)`} />
+          <Row k="Berat badan" v={`tetap ${IMPACT.avgBodyWeightKg} kg untuk semua peserta — rujukan Kemenkes AKG 2019 (Permenkes 28/2019)`} />
         </Section>
 
         {/* 7. Grafik */}
@@ -311,7 +311,7 @@ Total = ${fmt(k.calories)} kkal`}</F>
         <Section n="8" title="Referensi &amp; Sumber Resmi">
           <Row k="Energi lift (20 Wh/perjalanan)" v="ACEEE — Sachs, H. (2005), Opportunities for Elevator Energy Efficiency Improvements" />
           <Row k="Faktor emisi (0,773 kg/kWh)" v="proyeksi emisi grid nasional 2025 — 773 g/kWh (−6% 2030 · −37% 2040 · −75% 2050 · −100% 2060)" />
-          <Row k="Berat badan (asumsi)" v={`${IMPACT.avgBodyWeightKg} kg untuk semua peserta`} />
+          <Row k="Berat badan (asumsi)" v={`${IMPACT.avgBodyWeightKg} kg untuk semua peserta — Kemenkes AKG 2019 (Permenkes No. 28/2019)`} />
           <Row k="Peta lantai gedung" v="Door Config Report (159 reader, B2–LT15)" />
           <Row k="Metode energi lift" v="ISO 25745-2:2015 (kerangka running + standby)" />
         </Section>

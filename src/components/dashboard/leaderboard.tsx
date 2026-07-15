@@ -210,6 +210,12 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                   </tr>
                 );
               })}
+              {/* baris pengisi agar tinggi card tetap konsisten walau baris < PAGE_SIZE */}
+              {Array.from({ length: Math.max(0, PAGE_SIZE - pageRows.length) }).map((_, i) => (
+                <tr key={`filler-${i}`} className="border-b border-border/50">
+                  <td colSpan={2 + COLS.length} className="h-[45px]" />
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

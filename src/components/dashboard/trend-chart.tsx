@@ -21,6 +21,8 @@ function shortDate(d: string) {
   return `${day} ${MONTHS[Number(m) - 1]}`;
 }
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
+// ringkas angka besar biar sumbu Poin tak terpotong: 6000 → 6k, 29210 → 29.2k
+const compact = (v: number) => (v >= 1000 ? `${+(v / 1000).toFixed(1)}k` : `${v}`);
 
 const UP = "hsl(var(--success))";
 const DOWN = "#f5a623";
@@ -97,22 +99,22 @@ export function TrendChart({
         <div className="min-h-[248px] w-full flex-1">
           <ResponsiveContainer width="100%" height="100%">
             {mode === "month" ? (
-              <ComposedChart data={monthly} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
+              <ComposedChart data={monthly} margin={{ top: 8, right: 8, left: 2, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} minTickGap={16} />
-                <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "hsl(var(--primary))" }} axisLine={false} tickLine={false} width={34} />
-                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: UP }} axisLine={false} tickLine={false} width={28} />
+                <YAxis yAxisId="l" tickFormatter={compact} tick={{ fontSize: 10, fill: "hsl(var(--primary))" }} axisLine={false} tickLine={false} width={40} />
+                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: UP }} axisLine={false} tickLine={false} width={30} />
                 <Tooltip content={<TT title={(p: DayStat) => shortDate(p.date)} />} cursor={{ fill: "hsl(var(--muted) / 0.4)" }} />
                 <Bar yAxisId="l" dataKey="points" name="Poin" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} maxBarSize={16} />
                 <Line yAxisId="r" type="monotone" dataKey="upFloors" name="Lantai Naik" stroke={UP} strokeWidth={2} dot={false} />
                 <Line yAxisId="r" type="monotone" dataKey="downFloors" name="Lantai Turun" stroke={DOWN} strokeWidth={2} strokeDasharray="4 3" dot={false} />
               </ComposedChart>
             ) : (
-              <ComposedChart data={todaySlice} margin={{ top: 8, right: 4, left: -6, bottom: 0 }}>
+              <ComposedChart data={todaySlice} margin={{ top: 8, right: 8, left: 2, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis dataKey="hour" tickFormatter={(h) => String(h).padStart(2, "0")} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "hsl(var(--primary))" }} axisLine={false} tickLine={false} width={34} />
-                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: UP }} axisLine={false} tickLine={false} width={28} />
+                <YAxis yAxisId="l" tickFormatter={compact} tick={{ fontSize: 10, fill: "hsl(var(--primary))" }} axisLine={false} tickLine={false} width={40} />
+                <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: UP }} axisLine={false} tickLine={false} width={30} />
                 <Tooltip content={<TT title={(p: HourStat) => hourLabel(p.hour)} />} cursor={{ fill: "hsl(var(--muted) / 0.4)" }} />
                 <Bar yAxisId="l" dataKey="points" name="Poin" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} maxBarSize={26} />
                 <Line yAxisId="r" type="monotone" dataKey="upFloors" name="Lantai Naik" stroke={UP} strokeWidth={2} dot={{ r: 2 }} />

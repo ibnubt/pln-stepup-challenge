@@ -58,7 +58,7 @@ export function ImpactCard({ kpi }: { kpi: ScoreResult["kpi"] }) {
         ["Dari naik tangga", `${fmt(kpi.caloriesUp)} kcal`],
         ["Dari turun tangga", `${fmt(kpi.caloriesDown)} kcal`],
       ],
-      note: `Pakai berat badan tetap ${IMPACT.avgBodyWeightKg} kg untuk semua peserta (tanpa membedakan gender).`,
+      note: `Pakai berat badan tetap ${IMPACT.avgBodyWeightKg} kg untuk semua peserta — rujukan Kemenkes AKG 2019 (Permenkes 28/2019).`,
       highlight: { icon: Utensils, text: `Setara ${fmt(nasi)} porsi nasi · ${fmt(lariMenit)} menit lari` },
     },
   ];
