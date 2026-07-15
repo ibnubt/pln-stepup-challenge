@@ -329,7 +329,8 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
   }
   employeeStats.sort((a, b) => b.totalPoints - a.totalPoints);
 
-  // --- tren harian (org-wide) ---
+  // --- tren harian BULAN BERJALAN (org-wide) ---
+  const nowWib = new Date(Date.now() + 7 * 3600 * 1000); // WIB = UTC+7
   const dateMap = new Map<string, DayStat>();
   for (const s of allSessions) {
     if (!s.counted) continue;
@@ -353,7 +354,27 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
     const d = dateMap.get(dateKey(t.t));
     if (d) d.liftTrips += 1;
   }
-  const byDate = Array.from(dateMap.values()).sort((a, b) => (a.date < b.date ? -1 : 1));
+  // rangka penuh: tanggal 1 s/d akhir bulan berjalan; hari tanpa data → nilai 0
+  const mY = nowWib.getUTCFullYear();
+  const mM = nowWib.getUTCMonth(); // 0-11
+  const daysInMonth = new Date(Date.UTC(mY, mM + 1, 0)).getUTCDate();
+  const monthPrefix = `${mY}-${String(mM + 1).padStart(2, "0")}-`;
+  const byDate: DayStat[] = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = monthPrefix + String(d).padStart(2, "0");
+    byDate.push(
+      dateMap.get(date) ?? {
+        date,
+        upFloors: 0,
+        downFloors: 0,
+        points: 0,
+        tier: tierFor(0),
+        stairTrips: 0,
+        liftTrips: 0,
+        checkedIn: false,
+      }
+    );
+  }
 
   // --- heatmap lantai (traversal tangga vs lift per level) ---
   const heat = new Map<string, { stair: number; lift: number }>();
@@ -375,7 +396,6 @@ export function computeScores(taps: Tap[], employees: Employee[]): ScoreResult {
 
   // --- HARI INI: ikut tanggal KALENDER (WIB), bukan hari data terakhir ---
   // (kalau belum ada tap hari ini, chart "Hari Ini" tampil kosong dgn tanggal hari ini)
-  const nowWib = new Date(Date.now() + 7 * 3600 * 1000); // WIB = UTC+7
   const today = `${nowWib.getUTCFullYear()}-${String(nowWib.getUTCMonth() + 1).padStart(2, "0")}-${String(nowWib.getUTCDate()).padStart(2, "0")}`;
   const todayHourly: HourStat[] = Array.from({ length: 24 }, (_, hour) => ({
     hour,
