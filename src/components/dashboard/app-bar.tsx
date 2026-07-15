@@ -30,7 +30,7 @@ export function AppBar({ period }: { period: string }) {
             <CalendarRange className="h-3.5 w-3.5 text-primary" />
             <span className="font-medium text-foreground">{period}</span>
           </div>
-          <LiveIndicator intervalSec={15} />
+          <LiveIndicator intervalSec={Number(process.env.DASHBOARD_REFRESH_SEC) || 15} />
           <Link
             href="/metodologi"
             title="Metodologi & rumus perhitungan"

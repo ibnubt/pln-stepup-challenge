@@ -9,23 +9,24 @@ import { useRouter } from "next/navigation";
 export function LiveIndicator({ intervalSec = 15 }: { intervalSec?: number }) {
   const router = useRouter();
   const [ago, setAgo] = useState(0);
+  const secs = Math.max(2, intervalSec); // jaga-jaga: minimal 2 dtk
 
   useEffect(() => {
     let elapsed = 0;
     const id = setInterval(() => {
       elapsed += 1;
-      if (elapsed >= intervalSec) {
+      if (elapsed >= secs) {
         router.refresh(); // tarik ulang data terbaru dari server
         elapsed = 0;
       }
       setAgo(elapsed);
     }, 1000);
     return () => clearInterval(id);
-  }, [router, intervalSec]);
+  }, [router, secs]);
 
   return (
     <div
-      title={`Auto-refresh tiap ${intervalSec} dtk · sync ${5} dtk`}
+      title={`Auto-refresh data tiap ${secs} dtk`}
       className="hidden items-center gap-1.5 rounded-lg border border-[hsl(var(--success))]/30 bg-[hsl(var(--success))]/10 px-3 py-2 text-xs font-medium text-[hsl(var(--success))] md:flex"
     >
       <span className="relative flex h-2 w-2">
