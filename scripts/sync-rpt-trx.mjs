@@ -76,6 +76,11 @@ async function syncOnce(dst, src) {
 
   // insert taps (batch, idempotent)
   let ins = 0, maxT = wm;
+  // Batas atas watermark = sekarang + toleransi skew 10 mnt. Mencegah 1 tap dgn jam
+  // reader SALAH (ke masa depan) melompatkan watermark → men-skip semua tap nyata
+  // berikutnya (trxdate lebih kecil). Tap masa depan tetap DIsimpan, hanya tak
+  // memajukan watermark.
+  const nowCap = Math.floor(Date.now() / 1000) + WIB + 600;
   const B = 500;
   for (let i = 0; i < res.rows.length; i += B) {
     const chunk = res.rows.slice(i, i + B).filter((r) => levelOf.has(r.sourcename));
@@ -85,7 +90,9 @@ async function syncOnce(dst, src) {
       const o = k * 4;
       tp.push(`((to_timestamp($${o + 1}) AT TIME ZONE 'UTC')::timestamp,$${o + 2},$${o + 3},$${o + 4},'stair')`);
       tv.push(Number(r.trxdate), eid(r), levelOf.get(r.sourcename), r.sourcename);
-      if (Number(r.trxdate) > maxT) maxT = Number(r.trxdate);
+      const td = Number(r.trxdate);
+      if (td > maxT && td <= nowCap) maxT = td; // jangan majukan watermark dgn tap "masa depan"
+
     });
     const q = await dst.query(
       `INSERT INTO taps (ts,employee_id,level,device,kind) VALUES ${tp.join(",")}

@@ -11,3 +11,4 @@ next-env.d.ts
 # Tidak diperlukan untuk menjalankan app (app pakai data sintetis di src/data/).
 Transaction Report.csv
 Door Config Report.csv
+docker-compose.override.yml
