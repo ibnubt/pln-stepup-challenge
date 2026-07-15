@@ -73,6 +73,7 @@ const isHoliday = (d: string) => {
 // tanggal hari-KERJA berikutnya setelah `d` (lompati semua hari libur)
 const nextWorkday = (d: string) => {
   const dt = new Date(d + "T00:00:00Z");
+  if (Number.isNaN(dt.getTime())) return d; // tanggal tak valid → jangan lempar
   do {
     dt.setUTCDate(dt.getUTCDate() + 1);
   } while (isHoliday(dt.toISOString().slice(0, 10)));

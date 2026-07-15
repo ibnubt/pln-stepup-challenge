@@ -104,6 +104,10 @@ async function syncOnce(dst, src) {
 }
 
 let dst = null, src = null;
+// tutup koneksi dengan aman (abaikan error saat menutup)
+async function closeClient(c) {
+  try { await c?.end(); } catch { /* abaikan */ }
+}
 async function ensure() {
   if (!dst) {
     dst = new pg.Client({ connectionString: DST_URL });
@@ -122,6 +126,11 @@ async function tick() {
     await syncOnce(dst, src);
   } catch (e) {
     log("ERROR", e.message);
+    // PENTING: TUTUP koneksi sebelum reconnect. Tanpa ini, setiap error (mis. sumber
+    // tak terjangkau) membocorkan 1 koneksi ke DB lokal → menumpuk → "too many clients"
+    // → web gagal query → "server-side exception". (bug penyebab crash dashboard)
+    await closeClient(dst);
+    await closeClient(src);
     dst = null;
     src = null; // reconnect di tick berikutnya
   }

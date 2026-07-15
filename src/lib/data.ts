@@ -20,8 +20,15 @@ export async function getScores() {
   let employees: Employee[];
 
   if (IS_DB) {
-    const { loadFromDb } = await import("./db");
-    ({ taps, employees } = await loadFromDb());
+    try {
+      const { loadFromDb } = await import("./db");
+      ({ taps, employees } = await loadFromDb());
+    } catch (e) {
+      // DB error (mis. koneksi penuh/transien) → sajikan data terakhir bila ada,
+      // jangan bikin halaman crash ("server-side exception").
+      if (cache) return cache.result;
+      throw e;
+    }
   } else {
     taps = tapsRaw as Tap[];
     employees = employeesRaw as Employee[];
