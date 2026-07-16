@@ -323,7 +323,7 @@ Total = ${fmt(k.calories)} kkal`}</F>
               Catatan &amp; Keterbatasan
             </div>
             <ul className="mt-2 list-disc space-y-1.5 pl-4 text-[12px] text-muted-foreground">
-              <li>Data pegawai saat ini bersifat <b className="text-foreground">sintetis</b> untuk demo; pipeline siap menerima data tap RFID nyata.</li>
+              <li>Data berasal dari <b className="text-foreground">tap RFID nyata</b> sistem access-control (rpt_trx), disinkron near-realtime ke dashboard.</li>
               <li>
                 <b className="text-foreground">CO₂ per-sesi = batas atas</b> — mengasumsikan tiap orang naik lift
                 sendiri. Angka akan turun bila dikoreksi okupansi (orang/perjalanan).
