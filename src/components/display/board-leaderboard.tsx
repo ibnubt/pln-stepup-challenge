@@ -54,6 +54,13 @@ export function BoardLeaderboard({
             </div>
           );
         })}
+        {/* baris pengisi agar tinggi baris konsisten & kartu terisi penuh (kedua leaderboard sama) */}
+        {Array.from({ length: Math.max(0, limit - rows.length) }).map((_, k) => (
+          <div key={`fill-${k}`} className="flex min-h-0 flex-1 items-center gap-3 px-6 opacity-25">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-bold text-muted-foreground">{rows.length + k + 1}</span>
+            <div className="flex-1 text-lg text-muted-foreground">—</div>
+          </div>
+        ))}
       </div>
     </div>
   );

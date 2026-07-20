@@ -21,7 +21,7 @@ export function FitScreen({ w, h, children }: { w: number; h: number; children: 
 
   return (
     <div className="fixed inset-0 flex items-center justify-center overflow-hidden bg-background">
-      <div style={{ width: w, height: h, transform: `scale(${scale})`, transformOrigin: "center center" }}>
+      <div className="shrink-0" style={{ width: w, height: h, transform: `scale(${scale})`, transformOrigin: "center center" }}>
         {children}
       </div>
     </div>
