@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, SectionLabel } from "@/components/ui/card";
 import { fmt } from "@/lib/utils";
@@ -23,24 +24,47 @@ function TT({ active, payload, label }: any) {
   );
 }
 
-export function HourlyChart({ data }: { data: { hour: number; up: number; down: number }[] }) {
-  const slice = data.filter((d) => d.hour >= 5 && d.hour <= 21);
-  const totalUp = data.reduce((a, d) => a + d.up, 0);
-  const totalDown = data.reduce((a, d) => a + d.down, 0);
+export function HourlyChart({
+  data,
+  today,
+}: {
+  data: { date: string; hour: number; up: number; down: number }[];
+  today: string;
+}) {
+  const [from, setFrom] = useState(today);
+  const [to, setTo] = useState(today);
+
+  const { slice, totalUp, totalDown } = useMemo(() => {
+    const lo = from <= to ? from : to;
+    const hi = from <= to ? to : from;
+    const hours = Array.from({ length: 24 }, (_, hour) => ({ hour, up: 0, down: 0 }));
+    for (const d of data) {
+      if (d.date < lo || d.date > hi) continue;
+      hours[d.hour].up += d.up;
+      hours[d.hour].down += d.down;
+    }
+    return {
+      slice: hours.filter((d) => d.hour >= 5 && d.hour <= 21),
+      totalUp: hours.reduce((a, d) => a + d.up, 0),
+      totalDown: hours.reduce((a, d) => a + d.down, 0),
+    };
+  }, [data, from, to]);
 
   return (
     <Card className="animate-fade-in">
-      <CardHeader>
+      <CardHeader className="flex-col items-stretch gap-2">
         <CardTitle>
           <SectionLabel>Distribusi Jam</SectionLabel>
           <h3 className="text-sm font-semibold">Kapan Pegawai Naik &amp; Turun Tangga</h3>
         </CardTitle>
-        <div className="flex items-center gap-3 text-[11px]">
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="h-2 w-2 rounded-sm" style={{ background: UP }} /> Naik ({fmt(totalUp)})
-          </span>
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="h-2 w-2 rounded-sm" style={{ background: DOWN }} /> Turun ({fmt(totalDown)})
+        <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-md border border-border bg-background px-1.5 py-1 outline-none focus:border-primary/50" />
+          <span>s/d</span>
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-md border border-border bg-background px-1.5 py-1 outline-none focus:border-primary/50" />
+          <button onClick={() => { setFrom(today); setTo(today); }} className="rounded-md border border-border px-1.5 py-1 transition-colors hover:text-foreground" title="kembali ke hari ini">Hari ini</button>
+          <span className="ml-auto flex items-center gap-2">
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: UP }} /> Naik ({fmt(totalUp)})</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: DOWN }} /> Turun ({fmt(totalDown)})</span>
           </span>
         </div>
       </CardHeader>

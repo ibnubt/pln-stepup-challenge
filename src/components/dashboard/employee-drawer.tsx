@@ -98,7 +98,13 @@ function DayGroup({ date, sessions, day }: { date: string; sessions: Session[]; 
         <ChevronRight className={cn("h-3 w-3 shrink-0 text-muted-foreground transition-transform", open && "rotate-90")} />
         <span className="tabular font-semibold text-foreground">{dayLabel(date)}</span>
         {day ? (
-          <TierBadge tier={day.tier} />
+          <span
+            className="rounded px-1.5 py-0.5 text-[9px] font-semibold"
+            style={{ background: `${day.tier.color}1a`, color: day.tier.color }}
+            title="koefisien pengali poin hari itu (dari akumulasi lantai naik)"
+          >
+            Koef ×{day.tier.koef.toFixed(1)}
+          </span>
         ) : (
           <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">tanpa check-in</span>
         )}
@@ -180,10 +186,7 @@ function DayTooltip({ active, payload }: any) {
     <div className="rounded-lg border border-border bg-card/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
       <div className="font-semibold">{shortDate(d.date)}</div>
       <div className="tabular mt-1 text-muted-foreground">
-        {fmt(d.points)} poin · {d.upFloors} lt naik
-      </div>
-      <div className="mt-0.5">
-        <TierBadge tier={tierFor(d.upFloors)} />
+        {fmt(d.points)} poin · {d.upFloors} lt naik · Koef ×{tierFor(d.upFloors).koef.toFixed(1)}
       </div>
     </div>
   );
@@ -242,11 +245,9 @@ export function EmployeeDrawer({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-semibold">{e.name}</h3>
-                {e.real && (
-                  <span className="rounded bg-[hsl(var(--success))]/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-[hsl(var(--success))]">
-                    Real
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-0.5 rounded bg-[hsl(var(--warning))]/15 px-1.5 py-0.5 text-[9px] font-semibold text-[hsl(var(--warning))]" title="streak hari-kerja berjalan saat ini">
+                  <Flame className="h-2.5 w-2.5" /> Streak berjalan: {stat.currentStreak} hari
+                </span>
               </div>
               <p className="text-[11px] text-muted-foreground">
                 <span className={cn("mr-1 rounded px-1 text-[9px] font-semibold", stat.isPln ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>

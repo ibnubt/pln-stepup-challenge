@@ -133,7 +133,20 @@ function detectSessions(stairTaps: Tap[]): Omit<Session, "koef" | "points" | "co
         checkpoint,
         steps: run.map((r) => ({ lvl: r.lvl, t: r.t.slice(11, 19) })),
       });
-      i = j;
+      // Titik balik: bila tap berikutnya = ±1 lantai, gap valid, TAPI arah berlawanan
+      // (mis. naik ke LT4 lalu turun), puncak DIBAGI ke sesi berikutnya agar segmen turun
+      // terhitung penuh (LT4→LT1, bukan LT3→LT1) walau puncak hanya di-tap sekali.
+      let nextI = j;
+      if (j < stairTaps.length) {
+        const prev = stairTaps[j - 1];
+        const now = stairTaps[j];
+        const di = levelIndex(now.lvl) - levelIndex(prev.lvl);
+        const gap = (ms(now.t) - ms(prev.t)) / 1000;
+        if (Math.abs(di) === 1 && gap >= SEC_PER_FLOOR_MIN && gap <= SEC_PER_FLOOR_MAX && Math.sign(di) !== dir) {
+          nextI = j - 1; // bagikan tap puncak
+        }
+      }
+      i = nextI;
     } else {
       i += 1;
     }
@@ -204,6 +217,7 @@ export interface EmployeeStat {
   longestStreak: number;
   persona: string; // kebiasaan dari streak hari-kerja terpanjang (champion/regular/occasional/rare)
   tier: Tier; // berdasarkan rata2 lantai naik/hari
+  live: { floors: number; koef: number; color: string; emoji: string } | null; // sesi berjalan (tap terakhir ≤ ~2 mnt) → badge kedip
   days: DayStat[];
   sessions: Session[]; // seluruh sesi (untuk detail + jejak lantai)
 }
@@ -226,6 +240,8 @@ export interface ScoreResult {
   todayHourly: HourStat[];
   floorHeat: { level: string; stair: number; lift: number }[];
   hourly: { hour: number; up: number; down: number }[];
+  floorByDate: { level: string; date: string; stair: number; lift: number }[]; // untuk filter tanggal heatmap
+  hourlyByDate: { date: string; hour: number; up: number; down: number }[]; // untuk filter tanggal distribusi jam
   kpi: {
     activeEmployees: number;
     totalEmployees: number;
@@ -271,11 +287,13 @@ export function computeScores(
   employees: Employee[],
   opts?: { month?: string } // "YYYY-MM" — bulan yang ditampilkan (default: bulan berjalan WIB)
 ): ScoreResult {
-  const empById = new Map(employees.map((e) => [e.id, e]));
   // bulan berjalan (WIB) sbg default; bisa pilih bulan lain utk filter historis
   const nowWibM = new Date(Date.now() + 7 * 3600 * 1000);
   const curMonth = `${nowWibM.getUTCFullYear()}-${String(nowWibM.getUTCMonth() + 1).padStart(2, "0")}`;
   const targetMonth = opts?.month || curMonth;
+  // "sekarang" dalam jam WIB (naive-as-UTC) untuk deteksi sesi berjalan
+  const nowMsWib = Date.now() + 7 * 3600 * 1000;
+  const LIVE_WINDOW_MS = 120 * 1000; // tap terakhir ≤ 2 menit → dianggap sesi sedang berjalan
   // daftar bulan yg ADA datanya (untuk dropdown historis), terbaru dulu
   const availableMonths = Array.from(new Set(taps.filter((t) => t.kind === "stair").map((t) => t.t.slice(0, 7)))).sort().reverse();
   // batasi seluruh perhitungan ke bulan terpilih
@@ -342,9 +360,22 @@ export function computeScores(
     const { current, longest } = streaks(days.map((d) => d.date));
     const avgUp = activeDays ? upFloors / activeDays : 0;
     const avgDown = activeDays ? downFloors / activeDays : 0;
+    // sesi berjalan: sesi terbaru dgn tap terakhir ≤ 2 menit dari sekarang → badge kedip
+    let live: EmployeeStat["live"] = null;
+    const lastSess = [...allEmpSess].sort((a, b) => (a.time < b.time ? -1 : 1)).pop();
+    if (lastSess && lastSess.steps.length) {
+      const lt = lastSess.steps[lastSess.steps.length - 1].t; // "HH:mm:ss"
+      const lastMs = Date.parse(`${lastSess.date}T${lt}Z`);
+      const age = nowMsWib - lastMs;
+      if (age >= 0 && age <= LIVE_WINDOW_MS) {
+        const tr = tierFor(lastSess.floors); // ambang: Bronze@6 · Silver@11 · Gold@16 · dst
+        live = { floors: lastSess.floors, koef: tr.koef, color: tr.color, emoji: tr.emoji };
+      }
+    }
     employeeStats.push({
       emp,
       isPln: isPlnEmployee(emp.unit),
+      live,
       totalPoints,
       upFloors,
       downFloors,
@@ -425,6 +456,30 @@ export function computeScores(
   }
   const floorHeat = Array.from(heat.entries()).map(([level, v]) => ({ level, ...v }));
 
+  // heatmap per (lantai, tanggal) — untuk filter interval tanggal di komponen
+  const fbdMap = new Map<string, { level: string; date: string; stair: number; lift: number }>();
+  for (const t of monthTaps) {
+    const date = dateKey(t.t);
+    const key = `${t.lvl}|${date}`;
+    const e = fbdMap.get(key) ?? { level: t.lvl, date, stair: 0, lift: 0 };
+    if (t.kind === "stair") e.stair += 1;
+    else e.lift += 1;
+    fbdMap.set(key, e);
+  }
+  const floorByDate = Array.from(fbdMap.values());
+
+  // distribusi jam per (tanggal, jam) — untuk filter interval tanggal
+  const hbdMap = new Map<string, { date: string; hour: number; up: number; down: number }>();
+  for (const s of allSessions) {
+    if (!s.counted) continue;
+    const key = `${s.date}|${s.hour}`;
+    const e = hbdMap.get(key) ?? { date: s.date, hour: s.hour, up: 0, down: 0 };
+    if (s.dir === "up") e.up += 1;
+    else e.down += 1;
+    hbdMap.set(key, e);
+  }
+  const hourlyByDate = Array.from(hbdMap.values());
+
   // --- distribusi jam: trip tangga NAIK vs TURUN per jam ---
   const hourly = Array.from({ length: 24 }, (_, hour) => ({ hour, up: 0, down: 0 }));
   for (const s of allSessions) {
@@ -490,6 +545,8 @@ export function computeScores(
     todayHourly,
     floorHeat,
     hourly,
+    floorByDate,
+    hourlyByDate,
     kpi: {
       activeEmployees,
       totalEmployees: employeeStats.length, // hanya pegawai dgn sesi nyata (tanpa baris kosong)

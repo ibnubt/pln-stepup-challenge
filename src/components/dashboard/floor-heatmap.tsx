@@ -1,44 +1,80 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, SectionLabel } from "@/components/ui/card";
 import {
   LEVELS,
-  LEVEL_LABEL,
   levelIndex,
   CHECKPOINT_MIN_IDX,
   CHECKPOINT_MAX_IDX,
   LIFT_MIN_IDX,
-  LIFT_MAX_IDX,
-  type Level,
 } from "@/lib/config";
 import { cn, fmt } from "@/lib/utils";
 import { ArrowUpDown, MoveVertical } from "lucide-react";
 
 export function FloorHeatmap({
   data,
+  today,
 }: {
-  data: { level: string; stair: number; lift: number }[];
+  data: { level: string; date: string; stair: number; lift: number }[];
+  today: string;
 }) {
-  const map = new Map(data.map((d) => [d.level, d]));
-  const maxStair = Math.max(1, ...data.map((d) => d.stair));
+  // filter interval tanggal — default: hari ini
+  const [from, setFrom] = useState(today);
+  const [to, setTo] = useState(today);
+
+  const { agg, maxStair, total } = useMemo(() => {
+    const lo = from <= to ? from : to;
+    const hi = from <= to ? to : from;
+    const m = new Map<string, number>();
+    let tot = 0;
+    for (const d of data) {
+      if (d.date < lo || d.date > hi) continue;
+      m.set(d.level, (m.get(d.level) ?? 0) + d.stair);
+      tot += d.stair;
+    }
+    return { agg: m, maxStair: Math.max(1, ...Array.from(m.values(), (v) => v)), total: tot };
+  }, [data, from, to]);
 
   return (
     <Card className="animate-fade-in">
-      <CardHeader>
+      <CardHeader className="flex-col items-stretch gap-2">
         <CardTitle>
           <SectionLabel>Peta Vertikal Gedung</SectionLabel>
           <h3 className="text-sm font-semibold">Intensitas Tangga per Lantai</h3>
         </CardTitle>
-        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-3 rounded-sm bg-primary" /> jumlah tap tangga
-          </span>
+        <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+          <input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            className="rounded-md border border-border bg-background px-1.5 py-1 text-[10px] outline-none focus:border-primary/50"
+          />
+          <span>s/d</span>
+          <input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className="rounded-md border border-border bg-background px-1.5 py-1 text-[10px] outline-none focus:border-primary/50"
+          />
+          <button
+            onClick={() => {
+              setFrom(today);
+              setTo(today);
+            }}
+            className="rounded-md border border-border px-1.5 py-1 transition-colors hover:text-foreground"
+            title="kembali ke hari ini"
+          >
+            Hari ini
+          </button>
+          <span className="ml-auto tabular">{fmt(total)} tap</span>
         </div>
       </CardHeader>
       <CardContent className="pb-4">
         <div className="space-y-[3px]">
           {[...LEVELS].reverse().map((lvl) => {
             const idx = levelIndex(lvl);
-            const d = map.get(lvl);
-            const stair = d?.stair ?? 0;
+            const stair = agg.get(lvl) ?? 0;
             const isCp = idx >= CHECKPOINT_MIN_IDX && idx <= CHECKPOINT_MAX_IDX;
             const isBasement = idx < LIFT_MIN_IDX;
             const pct = (stair / maxStair) * 100;

@@ -9,10 +9,10 @@ import { Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Flame, Medal
 
 const PAGE_SIZE = 10;
 
-type SortKey = "totalPoints" | "upFloors" | "stairTrips" | "currentStreak" | "activeDays";
+type SortKey = "totalPoints" | "upFloors" | "stairTrips" | "longestStreak" | "activeDays";
 
 const COLS: { key: SortKey; label: string; align?: "right" }[] = [
-  { key: "currentStreak", label: "Streak", align: "right" },
+  { key: "longestStreak", label: "Best Streak", align: "right" },
   { key: "totalPoints", label: "Poin", align: "right" },
   { key: "upFloors", label: "Lantai Naik", align: "right" },
   { key: "stairTrips", label: "Trip Tangga", align: "right" },
@@ -172,7 +172,17 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 truncate font-medium">
                             {s.emp.name.replace(/ — .*/, "")}
-                            {s.emp.real && <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--success))]" />}
+                            {s.live ? (
+                              <span
+                                className="inline-flex shrink-0 animate-pulse items-center gap-0.5 rounded px-1 text-[10px] font-bold leading-normal"
+                                style={{ color: s.live.color, background: `${s.live.color}22` }}
+                                title={`Sedang naik tangga — ${s.live.floors} lantai (koef ×${s.live.koef.toFixed(1)})`}
+                              >
+                                {s.live.emoji} {s.live.floors}
+                              </span>
+                            ) : (
+                              s.emp.real && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[hsl(var(--success))]" />
+                            )}
                             {noScore && (
                               <span className="shrink-0 whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground" title="naik tangga tapi belum check-in (lewati LT1→LT4) — skor 0">
                                 belum check-in
@@ -190,8 +200,8 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                     </td>
                     <td className="px-3 py-2.5 text-right">
                       <span className="tabular inline-flex items-center gap-1 text-base font-bold text-[hsl(var(--warning))]">
-                        {s.currentStreak > 0 && <Flame className="h-5 w-5" />}
-                        {s.currentStreak}
+                        {s.longestStreak > 0 && <Flame className="h-5 w-5" />}
+                        {s.longestStreak}
                       </span>
                     </td>
                     <td className="px-3 py-2.5 text-right">

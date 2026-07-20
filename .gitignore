@@ -12,3 +12,6 @@ next-env.d.ts
 Transaction Report.csv
 Door Config Report.csv
 docker-compose.override.yml
+
+# backup database (jangan commit)
+backups/

@@ -180,7 +180,7 @@ TURUN m lantai → koef = koefisien(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR
             <table className="w-full text-[11px]">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="py-1 font-semibold">Badge</th>
+                  <th className="py-1 font-semibold">Tingkat</th>
                   <th className="py-1 text-right font-semibold">Lantai naik/hari</th>
                   <th className="py-1 text-right font-semibold">Koefisien</th>
                 </tr>

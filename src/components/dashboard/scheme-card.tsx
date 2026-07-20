@@ -45,7 +45,7 @@ export function SchemeCard() {
 
         <div className="mt-3 space-y-1">
           <div className="flex items-center gap-2 px-2.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <span className="w-[86px]">Badge</span>
+            <span className="w-[86px]">Tingkat</span>
             <span className="ml-auto">Lantai naik/hari</span>
             <span className="w-12 text-center">Koef</span>
           </div>

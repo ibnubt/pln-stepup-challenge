@@ -29,6 +29,15 @@ export default async function DashboardPage({
       <main className="container space-y-4 py-6">
         <KpiStrip kpi={s.kpi} />
 
+        {/* Leaderboard + Peta Vertikal Gedung — dipindah ke atas */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <Leaderboard stats={s.employeeStats} />
+          </div>
+          <FloorHeatmap data={s.floorByDate} today={s.today} />
+        </div>
+
+        {/* Aktivitas + Aturan Reward */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <TrendChart monthly={s.byDate} today={s.todayHourly} todayDate={s.today} />
@@ -40,14 +49,7 @@ export default async function DashboardPage({
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <Leaderboard stats={s.employeeStats} />
-          </div>
-          <FloorHeatmap data={s.floorHeat} />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <HourlyChart data={s.hourly} />
+            <HourlyChart data={s.hourlyByDate} today={s.today} />
           </div>
           <TierDistribution stats={ranked} />
         </div>
