@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, SectionLabel } from "@/components/ui/card";
-import { fmt } from "@/lib/utils";
+import { fmt, dateShift } from "@/lib/utils";
 
 const UP = "hsl(var(--success))";
 const DOWN = "hsl(var(--primary))";
@@ -31,7 +31,7 @@ export function HourlyChart({
   data: { date: string; hour: number; up: number; down: number }[];
   today: string;
 }) {
-  const [from, setFrom] = useState(today);
+  const [from, setFrom] = useState(dateShift(today, -6));
   const [to, setTo] = useState(today);
 
   const { slice, totalUp, totalDown } = useMemo(() => {
@@ -58,10 +58,10 @@ export function HourlyChart({
           <h3 className="text-sm font-semibold">Kapan Pegawai Naik &amp; Turun Tangga</h3>
         </CardTitle>
         <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-md border border-border bg-background px-1.5 py-1 outline-none focus:border-primary/50" />
+          <input type="date" value={from} max={today} onChange={(e) => setFrom(e.target.value)} className="rounded-md border border-border bg-background px-1.5 py-1 outline-none focus:border-primary/50" />
           <span>s/d</span>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-md border border-border bg-background px-1.5 py-1 outline-none focus:border-primary/50" />
-          <button onClick={() => { setFrom(today); setTo(today); }} className="rounded-md border border-border px-1.5 py-1 transition-colors hover:text-foreground" title="kembali ke hari ini">Hari ini</button>
+          <input type="date" value={to} max={today} onChange={(e) => setTo(e.target.value)} className="rounded-md border border-border bg-background px-1.5 py-1 outline-none focus:border-primary/50" />
+          <button onClick={() => { setFrom(dateShift(today, -6)); setTo(today); }} className="rounded-md border border-border px-1.5 py-1 transition-colors hover:text-foreground" title="7 hari terakhir">Minggu ini</button>
           <span className="ml-auto flex items-center gap-2">
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: UP }} /> Naik ({fmt(totalUp)})</span>
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: DOWN }} /> Turun ({fmt(totalDown)})</span>

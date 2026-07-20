@@ -9,7 +9,7 @@ import {
   CHECKPOINT_MAX_IDX,
   LIFT_MIN_IDX,
 } from "@/lib/config";
-import { cn, fmt } from "@/lib/utils";
+import { cn, fmt, dateShift } from "@/lib/utils";
 import { ArrowUpDown, MoveVertical } from "lucide-react";
 
 export function FloorHeatmap({
@@ -19,8 +19,8 @@ export function FloorHeatmap({
   data: { level: string; date: string; stair: number; lift: number }[];
   today: string;
 }) {
-  // filter interval tanggal — default: hari ini
-  const [from, setFrom] = useState(today);
+  // filter interval tanggal — default: 7 hari terakhir (per minggu)
+  const [from, setFrom] = useState(dateShift(today, -6));
   const [to, setTo] = useState(today);
 
   const { agg, maxStair, total } = useMemo(() => {
@@ -47,6 +47,7 @@ export function FloorHeatmap({
           <input
             type="date"
             value={from}
+            max={today}
             onChange={(e) => setFrom(e.target.value)}
             className="rounded-md border border-border bg-background px-1.5 py-1 text-[10px] outline-none focus:border-primary/50"
           />
@@ -54,18 +55,19 @@ export function FloorHeatmap({
           <input
             type="date"
             value={to}
+            max={today}
             onChange={(e) => setTo(e.target.value)}
             className="rounded-md border border-border bg-background px-1.5 py-1 text-[10px] outline-none focus:border-primary/50"
           />
           <button
             onClick={() => {
-              setFrom(today);
+              setFrom(dateShift(today, -6));
               setTo(today);
             }}
             className="rounded-md border border-border px-1.5 py-1 transition-colors hover:text-foreground"
-            title="kembali ke hari ini"
+            title="7 hari terakhir"
           >
-            Hari ini
+            Minggu ini
           </button>
           <span className="ml-auto tabular">{fmt(total)} tap</span>
         </div>
