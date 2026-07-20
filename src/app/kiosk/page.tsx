@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic";
 // Layar PORTRAIT (kiosk 9:16). Tanpa login. Auto-refresh.
 export default async function KioskPage({ searchParams }: { searchParams: { month?: string } }) {
   const s = await getScores(searchParams?.month);
+  const pln = s.employeeStats.filter((e) => e.isPln);
+  const non = s.employeeStats.filter((e) => !e.isPln);
   return (
     <div className="flex min-h-screen w-screen flex-col gap-4 bg-background p-6">
       <AutoRefresh sec={15} />
@@ -33,10 +35,15 @@ export default async function KioskPage({ searchParams }: { searchParams: { mont
 
       <BoardKpis kpi={s.kpi} className="grid-cols-2" />
 
-      <div className="min-h-[42vh]">
-        <BoardLeaderboard stats={s.employeeStats} limit={10} />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="min-h-[40vh]">
+          <BoardLeaderboard stats={pln} limit={10} title="Pegawai PLN" subtitle="Leaderboard" />
+        </div>
+        <div className="min-h-[40vh]">
+          <BoardLeaderboard stats={non} limit={10} title="Non-Pegawai" subtitle="TAD · ICON · dll" />
+        </div>
       </div>
-      <div className="min-h-[32vh]">
+      <div className="min-h-[30vh]">
         <BoardFloorMap data={s.floorByDate} today={s.today} />
       </div>
     </div>

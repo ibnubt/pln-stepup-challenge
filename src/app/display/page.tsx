@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic";
 // Layar LANDSCAPE (monitor besar 16:9). Tanpa login (kiosk). Auto-refresh.
 export default async function DisplayPage({ searchParams }: { searchParams: { month?: string } }) {
   const s = await getScores(searchParams?.month);
+  const pln = s.employeeStats.filter((e) => e.isPln);
+  const non = s.employeeStats.filter((e) => !e.isPln);
   return (
     <div className="flex h-screen w-screen flex-col gap-4 overflow-hidden bg-background p-6">
       <AutoRefresh sec={15} />
@@ -34,8 +36,11 @@ export default async function DisplayPage({ searchParams }: { searchParams: { mo
       <BoardKpis kpi={s.kpi} className="grid-cols-3 xl:grid-cols-6" />
 
       <div className="grid min-h-0 flex-1 grid-cols-3 gap-4">
-        <div className="col-span-2 min-h-0">
-          <BoardLeaderboard stats={s.employeeStats} limit={10} />
+        <div className="min-h-0">
+          <BoardLeaderboard stats={pln} limit={10} title="Pegawai PLN" subtitle="Leaderboard" />
+        </div>
+        <div className="min-h-0">
+          <BoardLeaderboard stats={non} limit={10} title="Non-Pegawai" subtitle="TAD · ICON · dll" />
         </div>
         <div className="min-h-0">
           <BoardFloorMap data={s.floorByDate} today={s.today} />
