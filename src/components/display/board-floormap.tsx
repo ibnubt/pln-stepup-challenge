@@ -1,8 +1,8 @@
 import { LEVELS, levelIndex, CHECKPOINT_MIN_IDX, CHECKPOINT_MAX_IDX, LIFT_MIN_IDX } from "@/lib/config";
-import { cn, fmt, dateShift } from "@/lib/utils";
+import { cn, fmt, startOfWeek } from "@/lib/utils";
 import { Building2 } from "lucide-react";
 
-/** Peta vertikal gedung read-only untuk display — agregasi 7 hari terakhir. */
+/** Peta vertikal gedung read-only untuk display — agregasi minggu ini (sejak Senin). */
 export function BoardFloorMap({
   data,
   today,
@@ -10,7 +10,7 @@ export function BoardFloorMap({
   data: { level: string; date: string; stair: number; lift: number }[];
   today: string;
 }) {
-  const lo = dateShift(today, -6);
+  const lo = startOfWeek(today);
   const agg = new Map<string, number>();
   for (const d of data) {
     if (d.date < lo || d.date > today) continue;
@@ -23,7 +23,7 @@ export function BoardFloorMap({
       <div className="flex shrink-0 items-center gap-2 border-b border-border px-6 py-4">
         <Building2 className="h-6 w-6 shrink-0 text-primary" />
         <h2 className="truncate text-2xl font-bold tracking-tight">Peta Vertikal Gedung</h2>
-        <span className="ml-auto shrink-0 text-sm font-medium uppercase tracking-wider text-muted-foreground">7 hari</span>
+        <span className="ml-auto shrink-0 text-sm font-medium uppercase tracking-wider text-muted-foreground">Minggu ini</span>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-1 px-5 py-3">
         {[...LEVELS].reverse().map((lvl) => {

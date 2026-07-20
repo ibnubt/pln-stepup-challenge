@@ -9,7 +9,7 @@ import {
   CHECKPOINT_MAX_IDX,
   LIFT_MIN_IDX,
 } from "@/lib/config";
-import { cn, fmt, dateShift } from "@/lib/utils";
+import { cn, fmt, startOfWeek } from "@/lib/utils";
 import { ArrowUpDown, MoveVertical } from "lucide-react";
 
 export function FloorHeatmap({
@@ -19,8 +19,8 @@ export function FloorHeatmap({
   data: { level: string; date: string; stair: number; lift: number }[];
   today: string;
 }) {
-  // filter interval tanggal — default: 7 hari terakhir (per minggu)
-  const [from, setFrom] = useState(dateShift(today, -6));
+  // filter interval tanggal — default: minggu ini (sejak Senin s/d hari ini)
+  const [from, setFrom] = useState(startOfWeek(today));
   const [to, setTo] = useState(today);
 
   const { agg, maxStair, total } = useMemo(() => {
@@ -61,11 +61,11 @@ export function FloorHeatmap({
           />
           <button
             onClick={() => {
-              setFrom(dateShift(today, -6));
+              setFrom(startOfWeek(today));
               setTo(today);
             }}
             className="rounded-md border border-border px-1.5 py-1 transition-colors hover:text-foreground"
-            title="7 hari terakhir"
+            title="sejak Senin minggu ini"
           >
             Minggu ini
           </button>

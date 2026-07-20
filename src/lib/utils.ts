@@ -19,6 +19,13 @@ export function dateShift(dateStr: string, n: number) {
   return dt.toISOString().slice(0, 10);
 }
 
+/** Tanggal SENIN pada minggu yang memuat `dateStr` (awal minggu berjalan). */
+export function startOfWeek(dateStr: string) {
+  const dow = new Date(dateStr + "T00:00:00Z").getUTCDay(); // 0=Min .. 6=Sab
+  const back = (dow + 6) % 7; // mundur ke Senin (Sen→0, Sel→1, … Min→6)
+  return dateShift(dateStr, -back);
+}
+
 export function fmtCompact(n: number) {
   if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "jt";
   if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "rb";
