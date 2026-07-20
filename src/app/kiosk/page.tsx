@@ -6,44 +6,43 @@ import { AutoRefresh } from "@/components/display/auto-refresh";
 
 export const dynamic = "force-dynamic";
 
-// Layar PORTRAIT (kiosk 9:16). Tanpa login. Auto-refresh.
+// Layar PORTRAIT (kiosk). Fluid — fit segala ukuran. Publik, auto-refresh.
 export default async function KioskPage({ searchParams }: { searchParams: { month?: string } }) {
   const s = await getScores(searchParams?.month);
   const pln = s.employeeStats.filter((e) => e.isPln);
   const non = s.employeeStats.filter((e) => !e.isPln);
   return (
-    <div className="flex min-h-screen w-screen flex-col gap-4 bg-background p-6">
+    <div className="flex h-[100dvh] w-[100vw] flex-col overflow-hidden bg-background" style={{ padding: "1.5vmin", gap: "1.2vmin" }}>
       <AutoRefresh sec={15} />
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-black/5">
+
+      <header className="flex shrink-0 items-center justify-between" style={{ gap: "1vmin" }}>
+        <div className="flex min-w-0 items-center" style={{ gap: "1.2vmin" }}>
+          <div className="flex shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-black/5" style={{ width: "7vmin", height: "7vmin", padding: "0.8vmin" }}>
             <img src="/logo-pln.svg" alt="PLN" className="h-full w-full object-contain" />
           </div>
-          <div className="leading-tight">
-            <h1 className="text-xl font-extrabold tracking-tight">PLN Step Up Challenge</h1>
-            <p className="text-xs text-muted-foreground">Gerakan Naik Tangga · Kantor Pusat</p>
+          <div className="min-w-0 leading-tight">
+            <h1 className="truncate font-extrabold tracking-tight" style={{ fontSize: "clamp(1rem,3.2vmin,2.8rem)" }}>PLN Step Up Challenge</h1>
+            <p className="truncate text-muted-foreground" style={{ fontSize: "clamp(0.6rem,1.7vmin,1.3rem)" }}>Gerakan Naik Tangga · Kantor Pusat</p>
           </div>
         </div>
-        <span className="flex items-center gap-2 rounded-lg border border-[hsl(var(--success))]/30 bg-[hsl(var(--success))]/10 px-2.5 py-1.5 text-xs font-semibold text-[hsl(var(--success))]">
-          <span className="relative flex h-2 w-2">
+        <span className="flex shrink-0 items-center gap-2 rounded-lg border border-[hsl(var(--success))]/30 bg-[hsl(var(--success))]/10 font-semibold text-[hsl(var(--success))]" style={{ fontSize: "clamp(0.6rem,1.7vmin,1.2rem)", padding: "0.8vmin 1.4vmin" }}>
+          <span className="relative flex" style={{ width: "1.6vmin", height: "1.6vmin" }}>
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[hsl(var(--success))] opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[hsl(var(--success))]" />
+            <span className="relative inline-flex h-full w-full rounded-full bg-[hsl(var(--success))]" />
           </span>
           LIVE
         </span>
       </header>
 
-      <BoardKpis kpi={s.kpi} className="grid-cols-2" />
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="min-h-[40vh]">
-          <BoardLeaderboard stats={pln} limit={10} title="Pegawai PLN" subtitle="Leaderboard" />
-        </div>
-        <div className="min-h-[40vh]">
-          <BoardLeaderboard stats={non} limit={10} title="Non-Pegawai" subtitle="TAD · ICON · dll" />
-        </div>
+      <div className="shrink-0" style={{ height: "22vh" }}>
+        <BoardKpis kpi={s.kpi} className="grid-cols-2" />
       </div>
-      <div className="min-h-[30vh]">
+
+      <div className="grid min-h-0 grid-cols-2" style={{ flex: "1.4 1 0%", gap: "1.2vmin" }}>
+        <BoardLeaderboard stats={pln} limit={10} title="Pegawai PLN" subtitle="Leaderboard" />
+        <BoardLeaderboard stats={non} limit={10} title="Non-Pegawai" subtitle="TAD · ICON" />
+      </div>
+      <div className="min-h-0" style={{ flex: "1 1 0%" }}>
         <BoardFloorMap data={s.floorByDate} today={s.today} />
       </div>
     </div>
