@@ -26,6 +26,15 @@ export function startOfWeek(dateStr: string) {
   return dateShift(dateStr, -back);
 }
 
+const BULAN_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+/** Label bulan Indonesia dari "YYYY-MM" → mis. "Juli 2026". */
+export function monthLabel(ym: string) {
+  const [y, m] = ym.split("-");
+  const idx = Number(m) - 1;
+  return `${BULAN_ID[idx] ?? m} ${y}`;
+}
+
 export function fmtCompact(n: number) {
   if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "jt";
   if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "rb";
