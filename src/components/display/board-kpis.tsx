@@ -6,9 +6,9 @@ import { Users, TrendingUp, Trophy, Footprints, Leaf, Flame } from "lucide-react
 export function BoardKpis({ kpi, className = "" }: { kpi: ScoreResult["kpi"]; className?: string }) {
   const items = [
     { label: "Partisipan Aktif", value: fmt(kpi.activeEmployees), sub: `${fmt(kpi.activeEmployeesPln)}/${fmt(kpi.activeEmployeesNon)} · PLN/Non`, icon: Users, accent: "212 82% 50%" },
-    { label: "Jumlah Lantai Naik/Turun", value: `${fmt(kpi.upFloors)}/${fmt(kpi.downFloors)}`, sub: "", icon: TrendingUp, accent: "152 62% 40%" },
+    { label: "Jumlah Anak Tangga", value: fmt(kpi.stairSteps), sub: "", icon: TrendingUp, accent: "152 62% 40%" },
     { label: "Total Poin", value: fmt(kpi.totalPoints), sub: "", icon: Trophy, accent: "45 100% 51%" },
-    { label: "Sesi Lift Dihindari", value: fmt(kpi.liftRidesAvoided), sub: "", icon: Footprints, accent: "199 89% 55%" },
+    { label: "Perjalanan Lift Dihindari", value: fmt(kpi.liftRidesAvoided), sub: "", icon: Footprints, accent: "199 89% 55%" },
     { label: "CO₂ Dihindari", value: `${fmt(kpi.co2KgAvoided, 2)} kg`, sub: "", icon: Leaf, accent: "152 62% 40%" },
     { label: "Kalori Terbakar", value: fmt(kpi.calories), sub: "", icon: Flame, accent: "24 90% 55%" },
   ];

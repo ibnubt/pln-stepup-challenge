@@ -43,6 +43,18 @@ export const CHECKPOINT_MAX_IDX = levelIndex("LT4");
 export const LIFT_MIN_IDX = levelIndex("LT1");
 export const LIFT_MAX_IDX = levelIndex("LT16");
 
+// ---- Konversi anak tangga (jumlah undakan per segmen antar-lantai) ----
+// Basement lebih pendek dari lantai atas. Nilai lantai tetap tersimpan; ini hanya konversi.
+export const STEPS_B2_B1 = 20; // B2 ↔ B1
+export const STEPS_B1_LT1 = 24; // B1 ↔ LT1
+export const STEPS_PER_FLOOR = 27; // LT1 ↔ LT2 dan seterusnya ke atas
+/** Jumlah anak tangga 1 segmen antar-lantai bersebelahan (pakai index level TERBAWAH dari pasangan). */
+export function stepsForSegment(loIdx: number): number {
+  if (loIdx <= levelIndex("B2")) return STEPS_B2_B1; // 0: B2↔B1
+  if (loIdx === levelIndex("B1")) return STEPS_B1_LT1; // 1: B1↔LT1
+  return STEPS_PER_FLOOR; // ≥2: LT1↔LT2 dst
+}
+
 // ---- Poin dasar ----
 export const POINTS_UP_PER_FLOOR = 100;
 export const POINTS_DOWN_PER_FLOOR = 50;

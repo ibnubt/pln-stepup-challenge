@@ -58,6 +58,43 @@ git pull && docker compose up -d --build   # update
 
 > Reader tangga sedang disiapkan — kalau nama `sourcename` final berbeda, edit `db/init/02-stair-reader.sql` lalu `docker compose up -d`.
 
+### Dua environment: DEV (staging) & PROD
+
+Supaya update bisa **diuji dulu** sebelum naik ke produksi. Caranya: **dua folder terpisah** di server yang sama, masing-masing punya `.env` sendiri (`COMPOSE_PROJECT_NAME` + `WEB_PORT` berbeda) → **container & volume data terpisah total**. Keduanya baca `rpt_trx` read-only, jadi aman.
+
+| | Folder | Branch | Port | Project (volume) |
+|---|---|---|---|---|
+| **PROD** | `wellness-prod` | `main` | 3000 | `wellness-prod` |
+| **DEV**  | `wellness-dev`  | `dev`  | 3001 | `wellness-dev`  |
+
+**Setup sekali (di server):**
+```bash
+# PROD
+git clone https://github.com/ibnubt/pln-stepup-challenge.git wellness-prod
+cd wellness-prod && git checkout main
+cp .env.example .env      # isi SOURCE_DATABASE_URL; set COMPOSE_PROJECT_NAME=wellness-prod, WEB_PORT=3000
+docker compose up -d --build         # → http://SERVER:3000
+cd ..
+
+# DEV
+git clone https://github.com/ibnubt/pln-stepup-challenge.git wellness-dev
+cd wellness-dev && git checkout dev
+cp .env.example .env      # isi SOURCE_DATABASE_URL; set COMPOSE_PROJECT_NAME=wellness-dev, WEB_PORT=3001
+docker compose up -d --build         # → http://SERVER:3001
+```
+
+**Alur update (uji di DEV dulu, baru PROD):**
+```bash
+# 1) tarik & rebuild DEV, cek di :3001
+cd wellness-dev && ./deploy.sh          # = git pull + docker compose up -d --build
+
+# 2) kalau DEV aman, promosikan dev → main lalu update PROD
+#    (merge dev→main via GitHub PR / `git merge dev` di main)
+cd ../wellness-prod && ./deploy.sh       # cek di :3000
+```
+
+> `deploy.sh` cukup dijalankan **di dalam** folder env-nya; skrip pakai `.env` folder itu. Update rutin (pull kode) **tidak** menghapus data — volume `pgdata` hanya hilang bila `docker compose down -v`.
+
 ### Mode demo (tanpa DB)
 Tanpa `.env`/DB: jalankan langsung dengan data sintetis — `npm install && npm run dev` (default `DATA_SOURCE` kosong → baca JSON).
 

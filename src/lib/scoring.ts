@@ -4,6 +4,7 @@
 // ============================================================================
 import {
   levelIndex,
+  stepsForSegment,
   koefFor,
   tierFor,
   levelFor,
@@ -250,6 +251,7 @@ export interface ScoreResult {
     participation: number;
     upFloors: number;
     downFloors: number;
+    stairSteps: number; // konversi lantai berpoin → total anak tangga (naik+turun)
     totalPoints: number;
     stairTrips: number;
     liftTrips: number;
@@ -517,6 +519,15 @@ export function computeScores(
   const downFloors = counted
     .filter((s) => s.dir === "down")
     .reduce((a, s) => a + s.floors, 0);
+  // Anak tangga: jumlah undakan tiap segmen antar-lantai yang dilewati (dari jejak `steps`),
+  // bukan lantai×angka tetap — basement (B2/B1) lebih pendek dari lantai atas.
+  let stairSteps = 0;
+  for (const s of counted) {
+    for (let k = 1; k < s.steps.length; k++) {
+      const lo = Math.min(levelIndex(s.steps[k - 1].lvl), levelIndex(s.steps[k].lvl));
+      stairSteps += stepsForSegment(lo);
+    }
+  }
 
   let loadKgFloor = 0;
   let calUp = 0;
@@ -560,6 +571,7 @@ export function computeScores(
       participation: employeeStats.length ? activeEmployees / employeeStats.length : 0,
       upFloors,
       downFloors,
+      stairSteps,
       totalPoints,
       stairTrips,
       liftTrips,

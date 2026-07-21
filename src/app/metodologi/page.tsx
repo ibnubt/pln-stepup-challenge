@@ -251,12 +251,17 @@ TURUN m lantai → koef = koefisien(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR
                 <td className="tabular py-1.5 text-right">{fmt(k.upFloors)} / {fmt(k.downFloors)}</td>
               </tr>
               <tr className="border-b border-border/50">
+                <td className="py-1.5 pr-2">Jumlah Anak Tangga</td>
+                <td className="py-1.5 pr-2 text-muted-foreground">konversi lantai berpoin → undakan: B2–B1 20, B1–LT1 24, antar-lantai atas 27</td>
+                <td className="tabular py-1.5 text-right">{fmt(k.stairSteps)}</td>
+              </tr>
+              <tr className="border-b border-border/50">
                 <td className="py-1.5 pr-2">Total Poin</td>
                 <td className="py-1.5 pr-2 text-muted-foreground">Σ poin seluruh pegawai (lihat Bagian 3)</td>
                 <td className="tabular py-1.5 text-right">{fmt(k.totalPoints)}</td>
               </tr>
               <tr className="border-b border-border/50">
-                <td className="py-1.5 pr-2">Lift Dihindari</td>
+                <td className="py-1.5 pr-2">Perjalanan Lift Dihindari</td>
                 <td className="py-1.5 pr-2 text-muted-foreground">jumlah sesi tangga berpoin (hari check-in) <span className="text-[hsl(var(--warning))]">(per-sesi, batas atas)</span></td>
                 <td className="tabular py-1.5 text-right">{fmt(k.liftRidesAvoided)}</td>
               </tr>
@@ -276,8 +281,8 @@ TURUN m lantai → koef = koefisien(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR
 
         {/* 6. Dampak */}
         <Section n="6" title="Dampak Program — Lift · Emisi · Kalori" sub="Rincian rumus + sumber tiap angka.">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">A. Lift Dihindari</div>
-          <F>{`Lift Dihindari = jumlah sesi tangga berpoin, naik+turun (hari check-in) = ${fmt(k.liftRidesAvoided)}`}</F>
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">A. Perjalanan Lift Dihindari</div>
+          <F>{`Perjalanan Lift Dihindari = jumlah sesi tangga berpoin, naik+turun (hari check-in) = ${fmt(k.liftRidesAvoided)}`}</F>
           <p className="text-[11px]">
             ⚠️ Asumsi <b className="text-foreground">1 sesi = 1 perjalanan lift</b> (okupansi belum dikoreksi → batas
             atas). Koreksi lanjutan = bagi okupansi (orang per perjalanan lift).

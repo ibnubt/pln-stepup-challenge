@@ -21,12 +21,12 @@ export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
       tip: "Partisipan (Pegawai PLN + Non-Pegawai) dengan minimal 1 hari sesi tangga valid, bulan berjalan.",
     },
     {
-      label: "Jumlah Lantai Naik/Turun",
-      value: `${fmt(kpi.upFloors)}/${fmt(kpi.downFloors)}`,
-      sub: `${fmt(kpi.upFloors)} naik · ${fmt(kpi.downFloors)} turun`,
+      label: "Jumlah Anak Tangga",
+      value: fmt(kpi.stairSteps),
+      sub: `${fmt(kpi.upFloors)}/${fmt(kpi.downFloors)} lantai naik/turun`,
       icon: TrendingUp,
       accent: "152 62% 40%",
-      tip: "Total segmen antar-lantai via tangga (sesi valid) — naik/turun. LT1→LT4 = 3 lantai.",
+      tip: "Konversi lantai berpoin → anak tangga: B2–B1 20, B1–LT1 24, antar-lantai atas 27 undakan/lantai. Rincian lantai naik/turun ada di leaderboard.",
     },
     {
       label: "Total Poin",
@@ -37,7 +37,7 @@ export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
       tip: "Naik = lantai×10×koef, Turun = lantai×5×koef. Koef 1.0–2.0 progresif per-trip.",
     },
     {
-      label: "Sesi Lift Dihindari",
+      label: "Perjalanan Lift Dihindari",
       value: `${fmt(kpi.liftRidesAvoided)}`,
       sub: `perjalanan lift · dari sesi tangga naik+turun`,
       icon: Footprints,
