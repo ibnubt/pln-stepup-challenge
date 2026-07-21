@@ -14,11 +14,11 @@ export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
   const items = [
     {
       label: "Partisipan Aktif",
-      value: `${fmt(kpi.activeEmployees)} (${fmt(kpi.activeEmployeesPln)}/${fmt(kpi.activeEmployeesNon)})`,
+      value: fmt(kpi.activeEmployees),
       sub: `${fmt(kpi.activeEmployeesPln)} Pegawai · ${fmt(kpi.activeEmployeesNon)} Non-Peg`,
       icon: Users,
       accent: "212 82% 50%",
-      tip: "Partisipan dengan minimal 1 hari sesi tangga valid. Format: total (Pegawai PLN / Non-Pegawai).",
+      tip: "Partisipan (Pegawai PLN + Non-Pegawai) dengan minimal 1 hari sesi tangga valid, bulan berjalan.",
     },
     {
       label: "Jumlah Lantai Naik/Turun",

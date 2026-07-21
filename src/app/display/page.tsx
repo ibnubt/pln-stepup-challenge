@@ -41,7 +41,7 @@ export default async function DisplayPage({ searchParams }: { searchParams: { mo
 
         <div className="grid min-h-0 flex-1 grid-cols-3 gap-5">
           <BoardLeaderboard stats={pln} limit={10} title="Pegawai PLN" subtitle="Leaderboard" />
-          <BoardLeaderboard stats={non} limit={10} title="Non-Pegawai" subtitle="TAD · ICON · dll" />
+          <BoardLeaderboard stats={non} limit={10} title="Non-Pegawai" subtitle="Leaderboard" />
           <BoardFloorMap data={s.floorByDate} today={s.today} />
         </div>
       </div>

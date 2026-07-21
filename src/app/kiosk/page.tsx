@@ -41,7 +41,7 @@ export default async function KioskPage({ searchParams }: { searchParams: { mont
 
         <div className="grid min-h-0 grid-cols-2 gap-5" style={{ flex: "1.35 1 0%" }}>
           <BoardLeaderboard stats={pln} limit={10} title="Pegawai PLN" subtitle="Leaderboard" />
-          <BoardLeaderboard stats={non} limit={10} title="Non-Pegawai" subtitle="TAD · ICON" />
+          <BoardLeaderboard stats={non} limit={10} title="Non-Pegawai" subtitle="Leaderboard" />
         </div>
         <div className="min-h-0" style={{ flex: "1 1 0%" }}>
           <BoardFloorMap data={s.floorByDate} today={s.today} />
