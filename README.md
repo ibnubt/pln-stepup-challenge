@@ -93,7 +93,9 @@ cd wellness-dev && ./deploy.sh          # = git pull + docker compose up -d --bu
 cd ../wellness-prod && ./deploy.sh       # cek di :3000
 ```
 
-> `deploy.sh` cukup dijalankan **di dalam** folder env-nya; skrip pakai `.env` folder itu. Update rutin (pull kode) **tidak** menghapus data — volume `pgdata` hanya hilang bila `docker compose down -v`.
+> Windows (cmd): pakai **`deploy.bat`** (bukan `deploy.sh`). Contoh: `cd wellness-dev && deploy.bat`. Salin `.env` pakai `copy` bukan `cp`.
+>
+> `deploy.sh`/`deploy.bat` cukup dijalankan **di dalam** folder env-nya; skrip pakai `.env` folder itu. Update rutin (pull kode) **tidak** menghapus data — volume `pgdata` hanya hilang bila `docker compose down -v`.
 
 ### Mode demo (tanpa DB)
 Tanpa `.env`/DB: jalankan langsung dengan data sintetis — `npm install && npm run dev` (default `DATA_SOURCE` kosong → baca JSON).
