@@ -24,7 +24,7 @@ export function ImpactCard({ kpi }: { kpi: ScoreResult["kpi"] }) {
       icon: ArrowDownUp,
       accent: "199 89% 55%",
       title: "Beban Lift Berkurang",
-      big: fmt(kpi.liftRidesAvoided),
+      big: `${fmt(kpi.liftRidesAvoided)} kali`,
       bigUnit: "perjalanan lift dihindari",
       metrics: [
         ["Sesi tangga (naik + turun)", fmt(kpi.liftPersonTripsAvoided)],

@@ -38,7 +38,7 @@ export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
     },
     {
       label: "Perjalanan Lift Dihindari",
-      value: `${fmt(kpi.liftRidesAvoided)}`,
+      value: `${fmt(kpi.liftRidesAvoided)} kali`,
       sub: `perjalanan lift · dari sesi tangga naik+turun`,
       icon: Footprints,
       accent: "199 89% 55%",
