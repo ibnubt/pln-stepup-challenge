@@ -14,7 +14,7 @@ type SortKey = "totalPoints" | "upFloors" | "stairTrips" | "longestStreak" | "ac
 const COLS: { key: SortKey; label: string; align?: "right" }[] = [
   { key: "longestStreak", label: "Best Streak", align: "right" },
   { key: "totalPoints", label: "Poin", align: "right" },
-  { key: "upFloors", label: "Lantai Naik", align: "right" },
+  { key: "upFloors", label: "Naik/Turun", align: "right" },
   { key: "stairTrips", label: "Trip Tangga", align: "right" },
 ];
 
@@ -141,7 +141,8 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                 const rank = rankMap.get(s.emp.id)!;
                 const initials = s.emp.name.replace(/—.*/, "").trim().split(" ").slice(0, 2).map((w) => w[0]).join("");
                 const noScore = s.totalPoints === 0; // naik tangga tapi belum check-in → abu-abu
-                const floors = noScore ? s.upFloorsRaw : s.upFloors; // tetap tampilkan lantai yang dinaiki
+                const up = noScore ? s.upFloorsRaw : s.upFloors; // tetap tampilkan lantai yang dinaiki
+                const down = noScore ? s.downFloorsRaw : s.downFloors;
                 const trips = noScore ? s.stairTripsRaw : s.stairTrips;
                 return (
                   <tr
@@ -171,7 +172,14 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 truncate font-medium">
-                            {s.emp.name.replace(/ — .*/, "")}
+                            <span className="truncate">{s.emp.name.replace(/ — .*/, "")}</span>
+                            <span
+                              className="shrink-0 whitespace-nowrap rounded px-1 py-0.5 text-[9px] font-semibold"
+                              style={{ background: `${s.tier.color}22`, color: s.tier.color }}
+                              title="Badge pegawai (dari rata-rata lantai naik/hari)"
+                            >
+                              {s.tier.emoji} {s.tier.name}
+                            </span>
                             {s.live ? (
                               <span
                                 className="inline-flex shrink-0 animate-pulse items-center gap-0.5 rounded px-1 text-[10px] font-bold leading-normal"
@@ -215,7 +223,11 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                         </span>
                       </div>
                     </td>
-                    <td className={cn("tabular px-3 py-2.5 text-right", noScore ? "text-muted-foreground" : "text-[hsl(var(--success))]")}>{fmt(floors)}</td>
+                    <td className="tabular whitespace-nowrap px-3 py-2.5 text-right">
+                      <span className={noScore ? "text-muted-foreground" : "text-[hsl(var(--success))]"}>{fmt(up)}</span>
+                      <span className="text-muted-foreground/50">/</span>
+                      <span className="text-primary">{fmt(down)}</span>
+                    </td>
                     <td className="tabular px-3 py-2.5 text-right text-muted-foreground">{fmt(trips)}</td>
                   </tr>
                 );
