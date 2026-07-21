@@ -244,6 +244,8 @@ export interface ScoreResult {
   hourlyByDate: { date: string; hour: number; up: number; down: number }[]; // untuk filter tanggal distribusi jam
   kpi: {
     activeEmployees: number;
+    activeEmployeesPln: number; // partisipan aktif Pegawai PLN
+    activeEmployeesNon: number; // partisipan aktif Non-Pegawai
     totalEmployees: number;
     participation: number;
     upFloors: number;
@@ -533,7 +535,10 @@ export function computeScores(
   const totalPoints = employeeStats.reduce((a, e) => a + e.totalPoints, 0);
   const stairTrips = counted.length;
   const liftTrips = liftTaps.length;
-  const activeEmployees = employeeStats.filter((e) => e.activeDays > 0).length;
+  const activeList = employeeStats.filter((e) => e.activeDays > 0);
+  const activeEmployees = activeList.length;
+  const activeEmployeesPln = activeList.filter((e) => e.isPln).length;
+  const activeEmployeesNon = activeEmployees - activeEmployeesPln;
 
   return {
     sessions: allSessions,
@@ -549,6 +554,8 @@ export function computeScores(
     hourlyByDate,
     kpi: {
       activeEmployees,
+      activeEmployeesPln,
+      activeEmployeesNon,
       totalEmployees: employeeStats.length, // hanya pegawai dgn sesi nyata (tanpa baris kosong)
       participation: employeeStats.length ? activeEmployees / employeeStats.length : 0,
       upFloors,

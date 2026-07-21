@@ -13,20 +13,20 @@ import {
 export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
   const items = [
     {
-      label: "Pegawai Aktif",
-      value: fmt(kpi.activeEmployees),
-      sub: `${Math.round(kpi.participation * 100)}% partisipasi · dari ${kpi.totalEmployees}`,
+      label: "Partisipan Aktif",
+      value: `${fmt(kpi.activeEmployees)} (${fmt(kpi.activeEmployeesPln)}/${fmt(kpi.activeEmployeesNon)})`,
+      sub: `${fmt(kpi.activeEmployeesPln)} Pegawai · ${fmt(kpi.activeEmployeesNon)} Non-Peg`,
       icon: Users,
       accent: "212 82% 50%",
-      tip: "Pegawai dengan minimal 1 hari sesi tangga valid dalam periode.",
+      tip: "Partisipan dengan minimal 1 hari sesi tangga valid. Format: total (Pegawai PLN / Non-Pegawai).",
     },
     {
-      label: "Lantai Naik",
-      value: fmt(kpi.upFloors),
-      sub: `${fmt(kpi.downFloors)} lantai turun`,
+      label: "Jumlah Lantai Naik/Turun",
+      value: `${fmt(kpi.upFloors)}/${fmt(kpi.downFloors)}`,
+      sub: `${fmt(kpi.upFloors)} naik · ${fmt(kpi.downFloors)} turun`,
       icon: TrendingUp,
       accent: "152 62% 40%",
-      tip: "Total segmen antar-lantai yang ditempuh via tangga (sesi valid). LT1→LT4 = 3 lantai.",
+      tip: "Total segmen antar-lantai via tangga (sesi valid) — naik/turun. LT1→LT4 = 3 lantai.",
     },
     {
       label: "Total Poin",
@@ -37,7 +37,7 @@ export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
       tip: "Naik = lantai×10×koef, Turun = lantai×5×koef. Koef 1.0–2.0 progresif per-trip.",
     },
     {
-      label: "Lift Dihindari",
+      label: "Sesi Lift Dihindari",
       value: `${fmt(kpi.liftRidesAvoided)}`,
       sub: `perjalanan lift · dari sesi tangga naik+turun`,
       icon: Footprints,
