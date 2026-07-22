@@ -286,11 +286,29 @@ function streaks(dates: string[]): { current: number; longest: number } {
   return { current: run, longest };
 }
 
+/**
+ * Normalisasi PROGRAM_START ("2026-07-22" | "2026-07-22 23:30" | "...T23:30:00")
+ * → "YYYY-MM-DDTHH:mm:ss" agar bisa dibandingkan string dgn tap.t (format sama).
+ * Return null bila kosong/format tanggal tak valid (aman: tanpa filter, tidak sembunyikan apa pun).
+ */
+export function normalizeEpoch(raw?: string): string | null {
+  if (!raw || !raw.trim()) return null;
+  const [d, tm = "00:00:00"] = raw.trim().replace(" ", "T").split("T");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+  const [hh = "00", mm = "00", ss = "00"] = tm.split(":");
+  return `${d}T${hh.padStart(2, "0")}:${mm.padStart(2, "0")}:${ss.padStart(2, "0")}`;
+}
+
 export function computeScores(
   taps: Tap[],
   employees: Employee[],
-  opts?: { month?: string } // "YYYY-MM" — bulan yang ditampilkan (default: bulan berjalan WIB)
+  // month "YYYY-MM" (default bulan berjalan WIB); programStart = cutoff reset (sembunyikan tap sebelumnya)
+  opts?: { month?: string; programStart?: string }
 ): ScoreResult {
+  // RESET cutoff: abaikan tap sebelum PROGRAM_START. Data lama TETAP di DB, hanya
+  // disembunyikan dari seluruh perhitungan (KPI, leaderboard, peta, daftar bulan).
+  const epoch = normalizeEpoch(opts?.programStart);
+  if (epoch) taps = taps.filter((t) => t.t >= epoch);
   // bulan berjalan (WIB) sbg default; bisa pilih bulan lain utk filter historis
   const nowWibM = new Date(Date.now() + 7 * 3600 * 1000);
   const curMonth = `${nowWibM.getUTCFullYear()}-${String(nowWibM.getUTCMonth() + 1).padStart(2, "0")}`;

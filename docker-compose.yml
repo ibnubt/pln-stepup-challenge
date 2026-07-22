@@ -30,6 +30,7 @@ services:
       DATABASE_URL: postgres://postgres:${DB_PASSWORD:-wellness}@db:5432/wellness
       DASHBOARD_TTL_SEC: ${DASHBOARD_TTL_SEC:-10}       # umur cache skor (dtk)
       DASHBOARD_REFRESH_SEC: ${DASHBOARD_REFRESH_SEC:-15}  # interval auto-refresh browser (dtk)
+      PROGRAM_START: ${PROGRAM_START:-}                  # reset: sembunyikan data SEBELUM timestamp ini (kosong = tampil semua)
     ports:
       - "${WEB_PORT:-3000}:3000"   # set WEB_PORT di .env bila port host bentrok
     restart: unless-stopped
