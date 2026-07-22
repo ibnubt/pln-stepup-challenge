@@ -26,6 +26,21 @@ const ORGS = [
 
 const MEDAL = ["#ffcb05", "#c0c6ce", "#c2803f"];
 
+/** Deret nomor halaman dgn ellipsis, mis. [1,"…",24,25,26,"…",48]. sib = jumlah tetangga kiri/kanan. */
+function pageItems(current: number, total: number, sib = 1): (number | "…")[] {
+  const pages = new Set<number>([1, total]);
+  for (let p = current - sib; p <= current + sib; p++) if (p >= 1 && p <= total) pages.add(p);
+  const sorted = [...pages].sort((a, b) => a - b);
+  const out: (number | "…")[] = [];
+  let prev = 0;
+  for (const p of sorted) {
+    if (prev && p - prev > 1) out.push("…");
+    out.push(p);
+    prev = p;
+  }
+  return out;
+}
+
 export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
   const [sortKey, setSortKey] = useState<SortKey>("totalPoints");
   const [asc, setAsc] = useState(false);
@@ -255,20 +270,26 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
               <ChevronLeft className="h-3.5 w-3.5" />
               Prev
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={cn(
-                  "h-7 w-7 rounded-md text-[11px] font-medium transition-colors",
-                  p === safePage
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                {p}
-              </button>
-            ))}
+            {pageItems(safePage, totalPages).map((p, i) =>
+              p === "…" ? (
+                <span key={`e${i}`} className="flex h-7 w-7 select-none items-center justify-center text-[11px] text-muted-foreground">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={cn(
+                    "h-7 min-w-[1.75rem] rounded-md px-1.5 text-[11px] font-medium transition-colors",
+                    p === safePage
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  {p}
+                </button>
+              )
+            )}
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage >= totalPages}
