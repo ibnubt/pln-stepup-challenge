@@ -15,3 +15,6 @@ docker-compose.override.yml
 
 # backup database (jangan commit)
 backups/
+
+# RAB / harga internal — JANGAN pernah di-commit
+RAB/
