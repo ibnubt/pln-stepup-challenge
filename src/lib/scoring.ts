@@ -309,9 +309,16 @@ export function computeScores(
   // disembunyikan dari seluruh perhitungan (KPI, leaderboard, peta, daftar bulan).
   const epoch = normalizeEpoch(opts?.programStart);
   if (epoch) taps = taps.filter((t) => t.t >= epoch);
-  // Kartu tak dikenal ("Unknown card"): tak punya identitas (nama kosong), id = nomor kartu.
-  // Abaikan seluruh tap-nya → tidak dihitung / tidak tampil di leaderboard, KPI, maupun peta.
-  const namedIds = new Set(employees.filter((e) => e.name && e.name.trim()).map((e) => e.id));
+  // Kartu tak dikenal ("Unknown card"): tak punya identitas — nama KOSONG, atau nama = nomor
+  // kartu (= id). Abaikan seluruh tap-nya → tak dihitung / tak tampil di leaderboard, KPI, peta.
+  const namedIds = new Set(
+    employees
+      .filter((e) => {
+        const n = (e.name || "").trim();
+        return n !== "" && n !== String(e.id).trim();
+      })
+      .map((e) => e.id)
+  );
   taps = taps.filter((t) => namedIds.has(t.e));
   // bulan berjalan (WIB) sbg default; bisa pilih bulan lain utk filter historis
   const nowWibM = new Date(Date.now() + 7 * 3600 * 1000);
