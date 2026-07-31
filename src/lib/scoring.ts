@@ -616,3 +616,95 @@ export function computeScores(
     },
   };
 }
+
+// ============================================================================
+// REKAP per pegawai untuk RENTANG TANGGAL bebas (untuk export). Memakai ulang
+// deteksi sesi & skoring per-hari yang sama dgn dashboard → angka konsisten.
+// ============================================================================
+export interface RecapRow {
+  rank: number;
+  name: string;
+  unit: string;
+  status: "Pegawai PLN" | "Non-Pegawai";
+  activeDays: number;
+  upFloors: number;
+  downFloors: number;
+  stairSteps: number;
+  points: number;
+  longestStreak: number;
+  liftAvoided: number;
+  stairTrips: number;
+}
+
+/** from/to = "YYYY-MM-DD" (inklusif). programStart = cutoff reset (opsional). */
+export function computeRangeRecap(
+  taps: Tap[],
+  employees: Employee[],
+  opts: { from: string; to: string; programStart?: string }
+): { rows: RecapRow[]; from: string; to: string; totals: { participants: number; upFloors: number; downFloors: number; stairSteps: number; points: number; liftAvoided: number } } {
+  const epoch = normalizeEpoch(opts.programStart);
+  if (epoch) taps = taps.filter((t) => t.t >= epoch);
+  // buang kartu tak dikenal (nama kosong / nama = id)
+  const namedIds = new Set(
+    employees.filter((e) => {
+      const n = (e.name || "").trim();
+      return n !== "" && n !== String(e.id).trim();
+    }).map((e) => e.id)
+  );
+  const { from, to } = opts;
+  const inRange = (t: Tap) => {
+    const d = dateKey(t.t);
+    return d >= from && d <= to;
+  };
+  const stair = taps.filter((t) => t.kind === "stair" && namedIds.has(t.e) && inRange(t));
+  const empMap = new Map(employees.map((e) => [e.id, e]));
+  const rows: RecapRow[] = [];
+  for (const [id, ts] of groupBy(stair, (t) => t.e)) {
+    const emp = empMap.get(id);
+    if (!emp) continue;
+    const sorted = [...ts].sort((a, b) => (a.t < b.t ? -1 : 1));
+    const sessions: Session[] = [];
+    for (const [, dts] of groupBy(sorted, (t) => dateKey(t.t))) {
+      sessions.push(...scoreDay(detectSessions(dts)));
+    }
+    if (sessions.length === 0) continue;
+    const counted = sessions.filter((s) => s.counted);
+    const upFloors = counted.filter((s) => s.dir === "up").reduce((a, s) => a + s.floors, 0);
+    const downFloors = counted.filter((s) => s.dir === "down").reduce((a, s) => a + s.floors, 0);
+    const points = counted.reduce((a, s) => a + s.points, 0);
+    let steps = 0;
+    for (const s of counted)
+      for (let k = 1; k < s.steps.length; k++)
+        steps += stepsForSegment(Math.min(levelIndex(s.steps[k - 1].lvl), levelIndex(s.steps[k].lvl)));
+    const activeDates = [...new Set(counted.map((s) => s.date))];
+    const { longest } = streaks(activeDates);
+    rows.push({
+      rank: 0,
+      name: (emp.name || "").trim() || id,
+      unit: (emp.unit || "").trim() || "-",
+      status: isPlnEmployee(emp.unit) ? "Pegawai PLN" : "Non-Pegawai",
+      activeDays: activeDates.length,
+      upFloors,
+      downFloors,
+      stairSteps: steps,
+      points,
+      longestStreak: longest,
+      liftAvoided: counted.length,
+      stairTrips: counted.length,
+    });
+  }
+  rows.sort((a, b) => b.points - a.points || b.stairSteps - a.stairSteps || a.name.localeCompare(b.name));
+  rows.forEach((r, i) => (r.rank = i + 1));
+  const totals = rows.reduce(
+    (t, r) => ({
+      participants: t.participants + 1,
+      upFloors: t.upFloors + r.upFloors,
+      downFloors: t.downFloors + r.downFloors,
+      stairSteps: t.stairSteps + r.stairSteps,
+      points: t.points + r.points,
+      liftAvoided: t.liftAvoided + r.liftAvoided,
+    }),
+    { participants: 0, upFloors: 0, downFloors: 0, stairSteps: 0, points: 0, liftAvoided: 0 }
+  );
+  return { rows, from, to, totals };
+}

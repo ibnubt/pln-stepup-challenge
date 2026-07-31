@@ -3,6 +3,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LogoutButton } from "@/components/ui/logout-button";
 import { LiveIndicator } from "@/components/dashboard/live-indicator";
 import { MonthSelector } from "@/components/dashboard/month-selector";
+import { ExportControl } from "@/components/dashboard/export-control";
 import { BookOpen } from "lucide-react";
 
 export function AppBar({ month, availableMonths }: { month: string; availableMonths: string[] }) {
@@ -30,6 +31,7 @@ export function AppBar({ month, availableMonths }: { month: string; availableMon
           <div className="hidden sm:flex">
             <MonthSelector month={month} available={availableMonths} />
           </div>
+          <ExportControl month={month} availableMonths={availableMonths} />
           <LiveIndicator intervalSec={Number(process.env.DASHBOARD_REFRESH_SEC) || 15} />
           <Link
             href="/metodologi"

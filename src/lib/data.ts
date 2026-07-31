@@ -1,6 +1,6 @@
 import tapsRaw from "@/data/taps.json";
 import employeesRaw from "@/data/employees.json";
-import { computeScores, type Tap, type Employee } from "./scoring";
+import { computeScores, computeRangeRecap, type Tap, type Employee } from "./scoring";
 
 // Sumber data:
 //   default        → JSON demo (src/data/*.json) — statis, tanpa DB
@@ -46,4 +46,10 @@ export async function getScores(month?: string) {
   const result = computeScores(raw.taps, raw.employees, { month, programStart: process.env.PROGRAM_START });
   scoreCache.set(key, { rawAt: raw.at, result });
   return result;
+}
+
+/** Rekap per pegawai untuk rentang tanggal [from,to] (YYYY-MM-DD, inklusif) — untuk export. */
+export async function getRecap(from: string, to: string) {
+  const raw = await loadRaw();
+  return computeRangeRecap(raw.taps, raw.employees, { from, to, programStart: process.env.PROGRAM_START });
 }
