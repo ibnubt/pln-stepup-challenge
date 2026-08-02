@@ -6,7 +6,7 @@ import { MonthSelector } from "@/components/dashboard/month-selector";
 import { ExportControl } from "@/components/dashboard/export-control";
 import { BookOpen } from "lucide-react";
 
-export function AppBar({ month, availableMonths }: { month: string; availableMonths: string[] }) {
+export function AppBar({ month, availableMonths, resetDay }: { month: string; availableMonths: string[]; resetDay: number }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between gap-4">
@@ -29,9 +29,9 @@ export function AppBar({ month, availableMonths }: { month: string; availableMon
 
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex">
-            <MonthSelector month={month} available={availableMonths} />
+            <MonthSelector month={month} available={availableMonths} resetDay={resetDay} />
           </div>
-          <ExportControl month={month} availableMonths={availableMonths} />
+          <ExportControl month={month} availableMonths={availableMonths} resetDay={resetDay} />
           <LiveIndicator intervalSec={Number(process.env.DASHBOARD_REFRESH_SEC) || 15} />
           <Link
             href="/metodologi"

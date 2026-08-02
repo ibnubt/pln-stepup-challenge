@@ -2,24 +2,27 @@ import ExcelJS from "exceljs";
 import type { NextRequest } from "next/server";
 import { getRecap } from "@/lib/data";
 import { AUTH_COOKIE } from "@/lib/auth";
+import { cycleWindow, cycleKeyOf } from "@/lib/utils";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const YM = /^\d{4}-\d{2}$/;
+const RESET_DAY = Math.min(28, Math.max(1, Number(process.env.RESET_DAY) || 1));
 
 function wibNow() {
   return new Date(Date.now() + 7 * 3600 * 1000);
 }
-function monthBounds(ym: string) {
-  const [y, m] = ym.split("-").map(Number);
-  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  return { from: `${ym}-01`, to: `${ym}-${String(last).padStart(2, "0")}` };
+// jendela periode dari kunci siklus "YYYY-MM"
+function periodBounds(ym: string) {
+  const { start, end } = cycleWindow(ym, RESET_DAY);
+  return { from: start, to: end };
 }
-function currentMonthBounds() {
+function currentPeriodBounds() {
   const n = wibNow();
-  return monthBounds(`${n.getUTCFullYear()}-${String(n.getUTCMonth() + 1).padStart(2, "0")}`);
+  const today = `${n.getUTCFullYear()}-${String(n.getUTCMonth() + 1).padStart(2, "0")}-${String(n.getUTCDate()).padStart(2, "0")}`;
+  return periodBounds(cycleKeyOf(today, RESET_DAY));
 }
 
 // warna (ARGB)
@@ -36,9 +39,9 @@ export async function GET(req: NextRequest) {
   const month = q.get("month") || "";
 
   if (YM.test(month)) {
-    ({ from, to } = monthBounds(month));
+    ({ from, to } = periodBounds(month));
   } else if (!(ISO.test(from) && ISO.test(to))) {
-    ({ from, to } = currentMonthBounds());
+    ({ from, to } = currentPeriodBounds());
   }
   if (from > to) [from, to] = [to, from];
 

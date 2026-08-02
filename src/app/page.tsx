@@ -24,7 +24,7 @@ export default async function DashboardPage({
 
   return (
     <div className="min-h-screen">
-      <AppBar month={s.month} availableMonths={s.availableMonths} />
+      <AppBar month={s.month} availableMonths={s.availableMonths} resetDay={s.resetDay} />
 
       <main className="container space-y-4 py-6">
         <KpiStrip kpi={s.kpi} />

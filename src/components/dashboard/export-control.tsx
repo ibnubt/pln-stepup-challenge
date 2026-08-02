@@ -1,16 +1,11 @@
 "use client";
 
-// Tombol export rekap tim (XLSX): mode Per Bulan atau Rentang Tanggal.
+// Tombol export rekap tim (XLSX): mode Per Periode (siklus) atau Rentang Tanggal.
 import { useState } from "react";
 import { Download } from "lucide-react";
+import { cycleLabel, cycleWindow } from "@/lib/utils";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-const mLabel = (m: string) => {
-  const [y, mo] = m.split("-");
-  return `${MONTHS[Number(mo) - 1]} ${y}`;
-};
-
-export function ExportControl({ month, availableMonths }: { month: string; availableMonths: string[] }) {
+export function ExportControl({ month, availableMonths, resetDay }: { month: string; availableMonths: string[]; resetDay: number }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"bulan" | "rentang">("bulan");
   const months = availableMonths.includes(month) ? availableMonths : [month, ...availableMonths];
@@ -18,7 +13,7 @@ export function ExportControl({ month, availableMonths }: { month: string; avail
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
   const today = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  const [from, setFrom] = useState(`${month}-01`);
+  const [from, setFrom] = useState(cycleWindow(month, resetDay).start); // default: awal periode berjalan
   const [to, setTo] = useState(today);
 
   const download = () => {
@@ -51,7 +46,7 @@ export function ExportControl({ month, availableMonths }: { month: string; avail
                     mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {m === "bulan" ? "Per Bulan" : "Rentang Tanggal"}
+                  {m === "bulan" ? "Per Periode" : "Rentang Tanggal"}
                 </button>
               ))}
             </div>
@@ -63,7 +58,7 @@ export function ExportControl({ month, availableMonths }: { month: string; avail
               >
                 {months.map((m) => (
                   <option key={m} value={m}>
-                    {mLabel(m)}
+                    {cycleLabel(m, resetDay)}
                   </option>
                 ))}
               </select>

@@ -35,6 +35,41 @@ export function monthLabel(ym: string) {
   return `${BULAN_ID[idx] ?? m} ${y}`;
 }
 
+// ---- Periode "siklus" (reset tiap tanggal RESET_DAY), mis. 23 → 22 bulan berikutnya ----
+const BULAN_SHORT = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Kunci siklus "YYYY-MM" = bulan tempat siklus DIMULAI (hari resetDay) yang memuat `dateStr`. */
+export function cycleKeyOf(dateStr: string, resetDay: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  if (d >= resetDay) return `${y}-${pad2(m)}`;
+  const prev = new Date(Date.UTC(y, m - 2, 1)); // (m-1)=bln ini 0-based, -1 = bln lalu
+  return `${prev.getUTCFullYear()}-${pad2(prev.getUTCMonth() + 1)}`;
+}
+
+/** Jendela siklus [start,end] (YYYY-MM-DD, inklusif) dari kunci siklus + resetDay. */
+export function cycleWindow(key: string, resetDay: number): { start: string; end: string } {
+  const [y, m] = key.split("-").map(Number);
+  const start = `${key}-${pad2(resetDay)}`;
+  const endDt = new Date(Date.UTC(y, m, resetDay - 1)); // m (1-based) sbg 0-based = bln berikutnya
+  return { start, end: `${endDt.getUTCFullYear()}-${pad2(endDt.getUTCMonth() + 1)}-${pad2(endDt.getUTCDate())}` };
+}
+
+/** Label periode dari jendela: "23 Jul – 22 Agu 2026" (tahun ditulis sekali bila sama). */
+export function periodLabel(start: string, end: string): string {
+  const [ys, ms, ds] = start.split("-").map(Number);
+  const [ye, me, de] = end.split("-").map(Number);
+  const left = `${ds} ${BULAN_SHORT[ms - 1]}${ys !== ye ? ` ${ys}` : ""}`;
+  const right = `${de} ${BULAN_SHORT[me - 1]} ${ye}`;
+  return `${left} – ${right}`;
+}
+
+/** Label periode langsung dari kunci siklus + resetDay. */
+export function cycleLabel(key: string, resetDay: number): string {
+  const { start, end } = cycleWindow(key, resetDay);
+  return periodLabel(start, end);
+}
+
 export function fmtCompact(n: number) {
   if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "jt";
   if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "rb";

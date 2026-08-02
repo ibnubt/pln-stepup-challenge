@@ -20,6 +20,7 @@ import {
   isPlnEmployee,
   type Tier,
 } from "./config";
+import { cycleKeyOf, cycleWindow, dateShift } from "./utils";
 
 export interface Tap {
   t: string; // "YYYY-MM-DDTHH:mm:ss" (waktu lokal)
@@ -236,8 +237,11 @@ export interface ScoreResult {
   employeeStats: EmployeeStat[];
   byDate: DayStat[];
   today: string;
-  month: string; // bulan yang ditampilkan "YYYY-MM"
-  availableMonths: string[]; // bulan yg ada datanya (untuk filter historis), terbaru dulu
+  month: string; // kunci siklus yang ditampilkan "YYYY-MM" (bulan tempat siklus dimulai)
+  periodStart: string; // tanggal mulai periode "YYYY-MM-DD" (inklusif)
+  periodEnd: string; // tanggal akhir periode "YYYY-MM-DD" (inklusif)
+  resetDay: number; // hari reset siklus (1 = bulan kalender)
+  availableMonths: string[]; // siklus yg ada datanya (untuk filter historis), terbaru dulu
   todayHourly: HourStat[];
   floorHeat: { level: string; stair: number; lift: number }[];
   hourly: { hour: number; up: number; down: number }[];
@@ -302,8 +306,9 @@ export function normalizeEpoch(raw?: string): string | null {
 export function computeScores(
   taps: Tap[],
   employees: Employee[],
-  // month "YYYY-MM" (default bulan berjalan WIB); programStart = cutoff reset (sembunyikan tap sebelumnya)
-  opts?: { month?: string; programStart?: string }
+  // month = kunci siklus "YYYY-MM" (default: siklus berjalan); programStart = cutoff reset;
+  // resetDay = hari mulai siklus tiap bulan (1 = bulan kalender, mis. 23 = 23→22 bln berikutnya)
+  opts?: { month?: string; programStart?: string; resetDay?: number }
 ): ScoreResult {
   // RESET cutoff: abaikan tap sebelum PROGRAM_START. Data lama TETAP di DB, hanya
   // disembunyikan dari seluruh perhitungan (KPI, leaderboard, peta, daftar bulan).
@@ -320,17 +325,21 @@ export function computeScores(
       .map((e) => e.id)
   );
   taps = taps.filter((t) => namedIds.has(t.e));
-  // bulan berjalan (WIB) sbg default; bisa pilih bulan lain utk filter historis
+  // PERIODE = siklus yang reset tiap tanggal `resetDay` (mis. 23 → 22 bln berikutnya).
+  // resetDay=1 → identik bulan kalender. targetCycle default = siklus berjalan (WIB).
+  const resetDay = Math.min(28, Math.max(1, Math.floor(opts?.resetDay || 1)));
   const nowWibM = new Date(Date.now() + 7 * 3600 * 1000);
-  const curMonth = `${nowWibM.getUTCFullYear()}-${String(nowWibM.getUTCMonth() + 1).padStart(2, "0")}`;
-  const targetMonth = opts?.month || curMonth;
+  const todayStr = `${nowWibM.getUTCFullYear()}-${String(nowWibM.getUTCMonth() + 1).padStart(2, "0")}-${String(nowWibM.getUTCDate()).padStart(2, "0")}`;
+  const currentCycle = cycleKeyOf(todayStr, resetDay);
+  const targetMonth = opts?.month || currentCycle; // "kunci" siklus (bulan tempat siklus dimulai)
+  const { start: periodStart, end: periodEnd } = cycleWindow(targetMonth, resetDay);
   // "sekarang" dalam jam WIB (naive-as-UTC) untuk deteksi sesi berjalan
   const nowMsWib = Date.now() + 7 * 3600 * 1000;
   const LIVE_WINDOW_MS = 120 * 1000; // tap terakhir ≤ 2 menit → dianggap sesi sedang berjalan
-  // daftar bulan yg ADA datanya (untuk dropdown historis), terbaru dulu
-  const availableMonths = Array.from(new Set(taps.filter((t) => t.kind === "stair").map((t) => t.t.slice(0, 7)))).sort().reverse();
-  // batasi seluruh perhitungan ke bulan terpilih
-  const monthTaps = taps.filter((t) => t.t.slice(0, 7) === targetMonth);
+  // daftar siklus yg ADA datanya (untuk dropdown historis), terbaru dulu
+  const availableMonths = Array.from(new Set(taps.filter((t) => t.kind === "stair").map((t) => cycleKeyOf(dateKey(t.t), resetDay)))).sort().reverse();
+  // batasi seluruh perhitungan ke PERIODE (siklus) terpilih
+  const monthTaps = taps.filter((t) => { const d = dateKey(t.t); return d >= periodStart && d <= periodEnd; });
   const stairTaps = monthTaps.filter((t) => t.kind === "stair");
   const liftTaps = monthTaps.filter((t) => t.kind === "lift");
 
@@ -458,13 +467,9 @@ export function computeScores(
     const d = dateMap.get(dateKey(t.t));
     if (d) d.liftTrips += 1;
   }
-  // rangka penuh: tanggal 1 s/d akhir bulan TERPILIH; hari tanpa data → nilai 0
-  const [tY, tM] = targetMonth.split("-").map(Number); // tM = 1-12
-  const daysInMonth = new Date(Date.UTC(tY, tM, 0)).getUTCDate();
-  const monthPrefix = `${targetMonth}-`;
+  // rangka penuh: tiap tanggal dalam PERIODE (siklus); hari tanpa data → nilai 0
   const byDate: DayStat[] = [];
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = monthPrefix + String(d).padStart(2, "0");
+  for (let date = periodStart; date <= periodEnd; date = dateShift(date, 1)) {
     byDate.push(
       dateMap.get(date) ?? {
         date,
@@ -586,6 +591,9 @@ export function computeScores(
     byDate,
     today,
     month: targetMonth,
+    periodStart,
+    periodEnd,
+    resetDay,
     availableMonths,
     todayHourly,
     floorHeat,

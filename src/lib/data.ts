@@ -43,7 +43,11 @@ export async function getScores(month?: string) {
   const key = month || "current";
   const cached = scoreCache.get(key);
   if (cached && cached.rawAt === raw.at) return cached.result; // valid selama data mentah belum refresh
-  const result = computeScores(raw.taps, raw.employees, { month, programStart: process.env.PROGRAM_START });
+  const result = computeScores(raw.taps, raw.employees, {
+    month,
+    programStart: process.env.PROGRAM_START,
+    resetDay: Number(process.env.RESET_DAY) || 1,
+  });
   scoreCache.set(key, { rawAt: raw.at, result });
   return result;
 }

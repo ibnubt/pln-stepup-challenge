@@ -31,6 +31,7 @@ services:
       DASHBOARD_TTL_SEC: ${DASHBOARD_TTL_SEC:-10}       # umur cache skor (dtk)
       DASHBOARD_REFRESH_SEC: ${DASHBOARD_REFRESH_SEC:-15}  # interval auto-refresh browser (dtk)
       PROGRAM_START: ${PROGRAM_START:-}                  # reset: sembunyikan data SEBELUM timestamp ini (kosong = tampil semua)
+      RESET_DAY: ${RESET_DAY:-1}                          # leaderboard reset tiap tanggal ini (1 = bulan kalender; 23 = siklus 23→22)
     ports:
       - "${WEB_PORT:-3000}:3000"   # set WEB_PORT di .env bila port host bentrok
     restart: unless-stopped

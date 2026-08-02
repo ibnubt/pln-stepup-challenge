@@ -4,7 +4,7 @@ import { BoardLeaderboard } from "@/components/display/board-leaderboard";
 import { BoardFloorMap } from "@/components/display/board-floormap";
 import { AutoRefresh } from "@/components/display/auto-refresh";
 import { FitScreen } from "@/components/display/fit-screen";
-import { monthLabel } from "@/lib/utils";
+import { periodLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ export default async function KioskPage({ searchParams }: { searchParams: { mont
             <div className="leading-tight">
               <h1 className="text-3xl font-extrabold tracking-tight">PLN Step Up Challenge</h1>
               <p className="text-base text-muted-foreground">
-                Gerakan Naik Tangga · <span className="font-semibold text-foreground">Data Bulan {monthLabel(s.month)}</span>
+                Gerakan Naik Tangga · <span className="font-semibold text-foreground">Periode {periodLabel(s.periodStart, s.periodEnd)}</span>
               </p>
             </div>
           </div>
@@ -47,7 +47,7 @@ export default async function KioskPage({ searchParams }: { searchParams: { mont
           <BoardLeaderboard stats={non} limit={10} title="Non-Pegawai" subtitle="Leaderboard" />
         </div>
         <div className="min-h-0" style={{ flex: "1 1 0%" }}>
-          <BoardFloorMap data={s.floorByDate} month={s.month} />
+          <BoardFloorMap data={s.floorByDate} label={periodLabel(s.periodStart, s.periodEnd)} />
         </div>
       </div>
     </FitScreen>

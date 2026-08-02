@@ -1,20 +1,15 @@
 "use client";
 
-// Dropdown pilih bulan (filter historis). Navigasi ke ?month=YYYY-MM → server
-// menghitung ulang untuk bulan itu. Bulan berjalan = opsi teratas.
+// Dropdown pilih PERIODE/siklus (filter historis). Navigasi ke ?month=<kunci-siklus> →
+// server menghitung ulang untuk siklus itu. Siklus berjalan = opsi teratas.
 import { useRouter, usePathname } from "next/navigation";
 import { CalendarRange } from "lucide-react";
+import { cycleLabel } from "@/lib/utils";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-function monthLabel(m: string) {
-  const [y, mo] = m.split("-");
-  return `${MONTHS[Number(mo) - 1]} ${y}`;
-}
-
-export function MonthSelector({ month, available }: { month: string; available: string[] }) {
+export function MonthSelector({ month, available, resetDay }: { month: string; available: string[]; resetDay: number }) {
   const router = useRouter();
   const pathname = usePathname();
-  // pastikan bulan terpilih selalu ada di daftar
+  // pastikan siklus terpilih selalu ada di daftar
   const opts = available.includes(month) ? available : [month, ...available];
 
   return (
@@ -24,11 +19,11 @@ export function MonthSelector({ month, available }: { month: string; available: 
         value={month}
         onChange={(e) => router.push(e.target.value === opts[0] ? pathname : `${pathname}?month=${e.target.value}`)}
         className="cursor-pointer bg-transparent font-medium text-foreground outline-none"
-        title="Pilih bulan (historis)"
+        title="Pilih periode (historis)"
       >
         {opts.map((m) => (
           <option key={m} value={m}>
-            {monthLabel(m)}
+            {cycleLabel(m, resetDay)}
           </option>
         ))}
       </select>
