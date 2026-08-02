@@ -18,3 +18,7 @@ backups/
 
 # RAB / harga internal — JANGAN pernah di-commit
 RAB/
+
+# others/ — backup SQL dari server (berisi data asli/PII) — JANGAN pernah di-commit
+others/
+/*.sql
