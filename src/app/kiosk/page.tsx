@@ -4,6 +4,7 @@ import { BoardLeaderboard } from "@/components/display/board-leaderboard";
 import { BoardFloorMap } from "@/components/display/board-floormap";
 import { AutoRefresh } from "@/components/display/auto-refresh";
 import { FitScreen } from "@/components/display/fit-screen";
+import { RunningText } from "@/components/display/running-text";
 import { periodLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ export default async function KioskPage({ searchParams }: { searchParams: { mont
         <div className="min-h-0" style={{ flex: "1 1 0%" }}>
           <BoardFloorMap data={s.floorByDate} label={periodLabel(s.periodStart, s.periodEnd)} />
         </div>
+        <RunningText text="Perhatian khusus untuk Ibu hamil, lansia, penyandang disabilitas, dan pengguna dengan kondisi kesehatan tertentu harap berhati-hati saat menggunakan tangga." />
       </div>
     </FitScreen>
   );
