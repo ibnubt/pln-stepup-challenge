@@ -124,10 +124,11 @@ export default async function MetodologiPage() {
 
         {/* 1. Sumber data */}
         <Section n="1" title="Sumber Data">
-          <Row k="Tap RFID (taps.json)" v="tiap tap = 1 checkpoint lantai · field: waktu, id pegawai, lantai, device, kind (stair/lift)" />
+          <Row k="Tap RFID reader tangga" v="dari sistem access-control (DB). Tiap tap = 1 pegawai menyentuh reader di 1 lantai · field: waktu, id pegawai, lantai, device, kind (stair/lift)" />
           <Row k="Pegawai" v="id/NIP, nama, unit (organisasi: PLN / TAD / ICON …), nomor kartu" />
-          <Row k="Peta lantai (doors-by-floor.json)" v="dari Door Config Report — 159 reader, mencakup B2 s/d LT15" />
-          <Row k="Rentang data" v="bulan berjalan (mulai tgl 1)" />
+          <Row k="Peta lantai" v="dari Door Config Report — 159 reader, mencakup B2 s/d LT15" />
+          <Row k="Periode (rentang data)" v="siklus bulanan — RESET tiap tanggal 23 (23 s/d 22 bln berikutnya); leaderboard mulai 0 tiap tgl 23. Diatur via RESET_DAY (default: bulan kalender)" />
+          <Row k="Data dikecualikan" v="kartu tak dikenal / belum enroll (nama kosong atau nama = nomor kartu) — TIDAK dihitung & TIDAK ditampilkan di leaderboard, KPI, maupun peta" />
           <p className="pt-1">
             Model gedung: <b className="text-foreground">18 level</b> (B2, B1, LT1–LT16). Lift melayani LT1–LT16;
             basement wajib tangga.
@@ -305,7 +306,7 @@ Total = ${fmt(k.calories)} kkal`}</F>
 
         {/* 7. Grafik */}
         <Section n="7" title="Grafik &amp; Visual">
-          <Row k="Tren Bulan Berjalan" v="bar Poin (sumbu kiri) + garis Lantai Naik/Turun (sumbu kanan) per hari; toggle 'Hari Ini' = per jam tanggal berjalan" />
+          <Row k="Tren Periode Berjalan" v="bar Poin (sumbu kiri) + garis Lantai Naik/Turun (sumbu kanan) per hari dalam siklus (23–22); toggle 'Hari Ini' = per jam tanggal berjalan" />
           <Row k="Distribusi Jam" v="jumlah sesi tangga NAIK vs TURUN per jam" />
           <Row k="Peta Vertikal Gedung" v={`jumlah tap tangga per lantai (${LEVELS[0]}–${LEVELS[LEVELS.length - 1]}); zona ${CHECKPOINT_ZONE.join("–")} disorot`} />
           <Row k="Distribusi Badge" v="jumlah pegawai aktif per badge (lihat Bagian 4)" />
