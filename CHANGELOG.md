@@ -10,7 +10,7 @@ Tiap versi punya git tag `vX.Y.Z`. Cara rilis dan rollback ada di README bagian 
 
 ## [Belum dirilis]
 
-Rencana nomor: 1.1.0. Build uji di DEV: 1.1.0-rc.3.
+Rencana nomor: 1.1.0. Build uji di DEV: 1.1.0-rc.4.
 
 ### Skor (aturan v2)
 - Check-in harian LT1 sampai LT4 dihapus. Semua sesi tangga yang lolos deteksi sesi langsung dapat poin.
@@ -27,6 +27,7 @@ Rencana nomor: 1.1.0. Build uji di DEV: 1.1.0-rc.3.
 
 ### Perbaikan data
 - Reader "L9 Tangga Darurat Tengah" sejak 23 Nov 2026 mengirim nomor kartu yang masih bercampur facility code 57 (nomor = kartu asli + 3.735.552), sehingga semua tap LT9 Gedung Utama terbaca sebagai kartu tak dikenal dan dibuang. Saat data dibaca, nomor itu sekarang dipetakan kembali ke pemilik kartunya (`CARD_FC_OFFSETS` di config). Database tidak diubah. Pada data 23 sampai 27 Nov: 540 tap pulih, 104 pegawai bertambah poinnya, tidak ada yang berkurang.
+- Tap yang masuk ACM terlambat sekarang ikut tertarik. Panel reader Gedung 1 (LT1, LT2, LT3, LT7) sempat putus koneksi dan mengirim tap belakangan dengan jam tap asli. Sync hanya membaca tap sesudah titik terakhirnya, sehingga tap itu terlewat: di PROD hanya tercatat 3, 2, 1, 1 tap, padahal di ACM ada 184, 78, 100, 51 (dibuktikan di DEV yang ditarik ulang sejak 22 Nov dari sumber yang sama). Sync sekarang memindai ulang `SYNC_RESCAN_HOURS` (default 72) jam terakhir tiap `SYNC_RESCAN_MIN` (default 15) menit dan saat start, tanpa dobel. Data yang lebih tua dari 72 jam perlu ditarik ulang sekali (mundurkan `sync_state`).
 
 ### Tampilan
 - Kartu "Aturan Reward", tooltip Total Poin, detail pegawai, dan halaman metodologi mengikuti aturan periode yang dipilih. Untuk aturan v2: tanpa label check-in, tanpa koefisien, dan tabel badge menggantikan tabel koefisien. Aturan lama tetap terdokumentasi di metodologi.

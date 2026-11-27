@@ -51,6 +51,8 @@ services:
       SYNC_INTERVAL: ${SYNC_INTERVAL:-30}           # detik antar sync
       SYNC_BACKFILL_DAYS: ${SYNC_BACKFILL_DAYS:-35}
       SYNC_VALID_ONLY: ${SYNC_VALID_ONLY:-}         # 1 = hanya Valid Credential (default: +Invalid)
+      SYNC_RESCAN_HOURS: ${SYNC_RESCAN_HOURS:-72}   # pindai ulang N jam terakhir utk tap yang masuk ACM terlambat (0 = mati)
+      SYNC_RESCAN_MIN: ${SYNC_RESCAN_MIN:-15}       # jeda antar pindai ulang (menit)
     restart: unless-stopped
 
 volumes:
