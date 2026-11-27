@@ -23,6 +23,11 @@ export function AppBar({ month, availableMonths, resetDay }: { month: string; av
             </div>
             <p className="text-[11px] text-muted-foreground">
               Program Naik Tangga · Kantor Pusat
+              {process.env.APP_VERSION && (
+                <span className="ml-1.5 font-mono text-[10px] text-muted-foreground/70" title="Versi aplikasi (lihat CHANGELOG.md)">
+                  v{process.env.APP_VERSION}
+                </span>
+              )}
             </p>
           </div>
         </div>

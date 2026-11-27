@@ -97,6 +97,38 @@ cd ../wellness-prod && ./deploy.sh       # cek di :3000
 >
 > `deploy.sh`/`deploy.bat` cukup dijalankan **di dalam** folder env-nya; skrip pakai `.env` folder itu. Update rutin (pull kode) **tidak** menghapus data — volume `pgdata` hanya hilang bila `docker compose down -v`.
 
+### Versi & rollback
+
+Nomor versi ada di `package.json`, riwayatnya di [CHANGELOG.md](CHANGELOG.md), dan tiap rilis ditandai git tag `vX.Y.Z`. Versi yang sedang jalan tampil di header dashboard (sebelah "Program Naik Tangga · Kantor Pusat").
+
+**Rilis versi baru** (di laptop):
+1. Kerjakan di branch `dev`. Catat perubahan di bagian "Belum dirilis" pada CHANGELOG.
+2. Naikkan `version` di `package.json`. Ganti judul "Belum dirilis" jadi `[X.Y.Z] - tanggal`.
+3. Uji di DEV. Kalau aman, merge `dev` ke `main`, lalu beri tag:
+   ```bash
+   git tag -a vX.Y.Z -m "vX.Y.Z"
+   git push origin main dev --tags && git push gitlab main dev --tags
+   ```
+4. Di server PROD: backup DB dulu, lalu `deploy.bat` (Windows) / `./deploy.sh`.
+   ```bash
+   mkdir backups   # sekali saja; folder ini gitignore
+   docker compose exec -T db pg_dump -U postgres wellness > backups/wellness_YYYYMMDD.sql
+   # Windows cmd: ... > backups\wellness_YYYYMMDD.sql
+   ```
+
+**Rollback PROD ke versi lama** (contoh `v1.0.0`), di folder `wellness-prod`:
+```bash
+git fetch --tags
+git checkout v1.0.0
+docker compose up -d --build
+```
+Data tidak hilang (volume `pgdata` tetap). Kalau versi yang ditinggalkan mengubah struktur DB, restore backup juga. Untuk kembali ke versi terbaru:
+```bash
+git checkout main
+deploy.bat        # Windows; atau ./deploy.sh
+```
+Cek versi yang sedang dipakai di server: `git describe --tags`.
+
 ### Mode demo (tanpa DB)
 Tanpa `.env`/DB: jalankan langsung dengan data sintetis — `npm install && npm run dev` (default `DATA_SOURCE` kosong → baca JSON).
 
