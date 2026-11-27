@@ -10,7 +10,7 @@ Tiap versi punya git tag `vX.Y.Z`. Cara rilis dan rollback ada di README bagian 
 
 ## [Belum dirilis]
 
-Rencana nomor: 1.1.0. Build uji di DEV: 1.1.0-rc.2.
+Rencana nomor: 1.1.0. Build uji di DEV: 1.1.0-rc.3.
 
 ### Skor (aturan v2)
 - Check-in harian LT1 sampai LT4 dihapus. Semua sesi tangga yang lolos deteksi sesi langsung dapat poin.
@@ -21,7 +21,8 @@ Rencana nomor: 1.1.0. Build uji di DEV: 1.1.0-rc.2.
 - Gedung ditentukan dari nama reader: diawali "GD 1" = Gedung 1 (Tangga Darurat Timur, LT1 sampai LT9), selain itu Gedung Utama (Tangga Darurat Tengah, B2 sampai LT16).
 - Sesi naik/turun dideteksi per gedung. Tap di dua gedung yang berurutan tidak lagi bisa membentuk satu sesi.
 - Poin, KPI, dan leaderboard tetap digabung untuk dua gedung.
-- Peta vertikal (dashboard, display, kiosk) menampilkan Gedung Utama dan Gedung 1 berdampingan dengan skala bar yang sama.
+- Peta vertikal memakai skala bar yang sama untuk dua gedung. Di display dan kiosk, Gedung Utama dan Gedung 1 berdampingan dengan garis pemisah vertikal. Di dashboard, Gedung 1 ditaruh di bawah Gedung Utama (memakai ruang kosong di samping leaderboard) dengan garis pemisah horizontal.
+- Reader Gedung 1 harus terdaftar di tabel `stair_reader` pada tiap database. PROD sudah sejak 22 Nov 2026; database lain (DEV, laptop) perlu didaftarkan manual.
 - Anak tangga Gedung 1 sementara 27 per lantai, menunggu angka dari GA.
 
 ### Perbaikan data
@@ -30,6 +31,9 @@ Rencana nomor: 1.1.0. Build uji di DEV: 1.1.0-rc.2.
 ### Tampilan
 - Kartu "Aturan Reward", tooltip Total Poin, detail pegawai, dan halaman metodologi mengikuti aturan periode yang dipilih. Untuk aturan v2: tanpa label check-in, tanpa koefisien, dan tabel badge menggantikan tabel koefisien. Aturan lama tetap terdokumentasi di metodologi.
 - Tooltip Total Poin sekarang menulis poin dasar yang benar (100 dan 50, sebelumnya tertulis 10 dan 5).
+
+### Operasional
+- Build Docker lebih cepat: tahap instal library hanya bergantung pada `package-lock.json`, sehingga menaikkan nomor versi tidak lagi memicu `npm ci` ulang. Build pertama setelah perubahan ini masih menginstal ulang sekali.
 
 ## [1.0.0] - 2026-11-27
 

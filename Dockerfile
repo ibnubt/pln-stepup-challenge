@@ -7,8 +7,12 @@
 # ---- 1. deps: install dependencies ----
 FROM node:20-alpine AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+# Hanya package-lock.json yang menentukan cache layer ini. package.json dibuat ulang dari
+# lock (tanpa field version), jadi menaikkan nomor versi app TIDAK memicu npm ci ulang
+# (deploy jauh lebih cepat). Dependency tetap persis sesuai lock.
+COPY package-lock.json ./
+RUN node -e "const r=require('./package-lock.json').packages[''];require('fs').writeFileSync('package.json',JSON.stringify({name:r.name,private:true,dependencies:r.dependencies||{},devDependencies:r.devDependencies||{}}))" \
+ && npm ci
 
 # ---- 2. builder: build Next.js (output: standalone) ----
 FROM node:20-alpine AS builder
