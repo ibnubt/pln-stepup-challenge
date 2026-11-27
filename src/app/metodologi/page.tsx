@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getScores } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, SectionLabel } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { fmt } from "@/lib/utils";
+import { fmt, dateLabel, dateShift } from "@/lib/utils";
 import {
   POINTS_UP_PER_FLOOR,
   POINTS_DOWN_PER_FLOOR,
@@ -11,7 +11,7 @@ import {
   SEC_PER_FLOOR_MAX,
   CHECKPOINT_ZONE,
   IMPACT,
-  LEVELS,
+  BUILDINGS,
 } from "@/lib/config";
 import { ArrowLeft, BookOpen } from "lucide-react";
 
@@ -65,6 +65,9 @@ export const dynamic = "force-dynamic";
 export default async function MetodologiPage() {
   const s = await getScores();
   const k = s.kpi;
+  const v2 = s.rules === "v2"; // aturan periode berjalan
+  const since = s.rulesV2Start; // tanggal mulai aturan v2 (null = belum aktif)
+  const gedung = BUILDINGS.map((b) => `${b.name} ${b.levels[0]}–${b.levels[b.levels.length - 1]}`).join(" · ");
 
   return (
     <div className="min-h-screen">
@@ -114,8 +117,8 @@ export default async function MetodologiPage() {
             <div className="mt-3">
               <F>{`RAW TAP (taps.json)
    → [1] Deteksi sesi tangga (rangkai tap berurutan)
-   → [2] Cek check-in harian (NAIK LT1→LT2→LT3→LT4) → tentukan hari berpoin
-   → [3] Skoring poin (koefisien progresif per-trip)
+   → [2] ${v2 ? "Semua sesi dihitung (tanpa check-in)" : "Cek check-in harian (NAIK LT1→LT2→LT3→LT4) → tentukan hari berpoin"}
+   → [3] Skoring poin (${v2 ? "lantai × poin dasar, tanpa koefisien" : "koefisien progresif per-trip"})
    → [4] Agregasi per pegawai / per hari / org
    → [5] KPI + Dampak (energi, emisi, kalori)`}</F>
             </div>
@@ -126,12 +129,12 @@ export default async function MetodologiPage() {
         <Section n="1" title="Sumber Data">
           <Row k="Tap RFID reader tangga" v="dari sistem access-control (DB). Tiap tap = 1 pegawai menyentuh reader di 1 lantai · field: waktu, id pegawai, lantai, device, kind (stair/lift)" />
           <Row k="Pegawai" v="id/NIP, nama, unit (organisasi: PLN / TAD / ICON …), nomor kartu" />
-          <Row k="Peta lantai" v="dari Door Config Report — 159 reader, mencakup B2 s/d LT15" />
+          <Row k="Reader tangga" v="Gedung Utama: Tangga Darurat Tengah, 18 reader (B2–LT16) · Gedung 1: Tangga Darurat Timur, 9 reader (LT1–LT9). Gedung ditentukan dari nama reader (diawali &quot;GD 1&quot; = Gedung 1)" />
           <Row k="Periode (rentang data)" v="siklus bulanan — RESET tiap tanggal 23 (23 s/d 22 bln berikutnya); leaderboard mulai 0 tiap tgl 23. Diatur via RESET_DAY (default: bulan kalender)" />
           <Row k="Data dikecualikan" v="kartu tak dikenal / belum enroll (nama kosong atau nama = nomor kartu) — TIDAK dihitung & TIDAK ditampilkan di leaderboard, KPI, maupun peta" />
           <p className="pt-1">
-            Model gedung: <b className="text-foreground">18 level</b> (B2, B1, LT1–LT16). Lift melayani LT1–LT16;
-            basement wajib tangga.
+            Model gedung: <b className="text-foreground">{gedung}</b>. Kode lantai sama di kedua gedung; sesi dan peta
+            lantai dipisah per gedung, poin dan leaderboard digabung.
           </p>
         </Section>
 
@@ -149,6 +152,7 @@ export default async function MetodologiPage() {
               </tr>
             </thead>
             <tbody className="text-foreground">
+              <tr className="border-b border-border/50"><td className="py-1.5 pr-3">Gedung sama</td><td>semua tap dari reader gedung yang sama</td></tr>
               <tr className="border-b border-border/50"><td className="py-1.5 pr-3">Lantai bersebelahan</td><td>|Δlantai| = 1</td></tr>
               <tr className="border-b border-border/50"><td className="py-1.5 pr-3">Jeda wajar</td><td className="tabular">{SEC_PER_FLOOR_MIN}–{SEC_PER_FLOOR_MAX} detik antar-tap</td></tr>
               <tr className="border-b border-border/50"><td className="py-1.5 pr-3">Arah konsisten</td><td>semua naik ATAU semua turun</td></tr>
@@ -157,54 +161,119 @@ export default async function MetodologiPage() {
           </table>
           <F>{`jumlah lantai (sesi) = jumlah tap − 1
 Jeda > ${SEC_PER_FLOOR_MAX} detik  →  sesi PUTUS, mulai sesi baru`}</F>
-          <p>
-            <b className="text-foreground">Aturan check-in:</b> pegawai wajib{" "}
-            <b className="text-pln-gold">NAIK melewati seluruh {CHECKPOINT_ZONE.join("→")}</b> dalam satu sesi (tapping{" "}
-            {CHECKPOINT_ZONE.join("-")}) minimal sekali (biasanya saat datang pagi). Hanya arah <b>NAIK</b> yang dihitung
-            sebagai check-in — <b>turun</b> (4→1) tidak. <b className="text-foreground">Setelah check-in, SEMUA sesi
-            tangga hari itu dapat poin</b> (termasuk sesi turun & gerakan antar-lantai atas seperti LT7→LT9). Hari{" "}
-            <b className="text-foreground">tanpa check-in → tidak ada poin</b>.
-          </p>
+          {v2 ? (
+            <p>
+              <b className="text-foreground">Tanpa check-in:</b> setiap sesi tangga yang lolos aturan di atas langsung
+              dapat poin, di gedung mana pun{since && <> (berlaku sejak {dateLabel(since)})</>}.
+            </p>
+          ) : (
+            <p>
+              <b className="text-foreground">Aturan check-in:</b> pegawai wajib{" "}
+              <b className="text-pln-gold">NAIK melewati seluruh {CHECKPOINT_ZONE.join("→")}</b> dalam satu sesi (tapping{" "}
+              {CHECKPOINT_ZONE.join("-")}) minimal sekali (biasanya saat datang pagi). Hanya arah <b>NAIK</b> yang dihitung
+              sebagai check-in — <b>turun</b> (4→1) tidak. <b className="text-foreground">Setelah check-in, SEMUA sesi
+              tangga hari itu dapat poin</b> (termasuk sesi turun & gerakan antar-lantai atas seperti LT7→LT9). Hari{" "}
+              <b className="text-foreground">tanpa check-in → tidak ada poin</b>.
+            </p>
+          )}
         </Section>
 
         {/* 3. Poin */}
-        <Section n="3" title="Poin Reward" sub="Koefisien progresif per-trip.">
-          <F>{`Per pegawai, per hari. Sesi diurut waktu.
+        <Section n="3" title="Poin Reward" sub={v2 ? "Tanpa koefisien: tiap lantai bernilai sama." : "Koefisien progresif per-trip."}>
+          {v2 && (
+            <>
+              <F>{`Per sesi tangga (semua gedung):
+NAIK  n lantai → poin = n × ${POINTS_UP_PER_FLOOR}
+TURUN m lantai → poin = m × ${POINTS_DOWN_PER_FLOOR}`}</F>
+              <p className="pt-1 text-[11px]">
+                <b className="text-foreground">Contoh:</b> naik LT1→LT9 (8 lantai) lalu turun LT9→LT1 (8 lantai) → 8 × {POINTS_UP_PER_FLOOR} + 8 × {POINTS_DOWN_PER_FLOOR} ={" "}
+                {fmt(8 * POINTS_UP_PER_FLOOR + 8 * POINTS_DOWN_PER_FLOOR)} poin.
+              </p>
+            </>
+          )}
+          {v2 ? (
+            <details className="rounded-lg border border-border/60 px-3 py-2">
+              <summary className="cursor-pointer text-[11px] font-semibold text-foreground">
+                Aturan lama{since && <> (sampai {dateLabel(dateShift(since, -1))})</>}: check-in + koefisien
+              </summary>
+              <div className="mt-2 space-y-2">
+                <p className="text-[11px]">
+                  Wajib check-in NAIK {CHECKPOINT_ZONE.join("→")} sekali sehari; tanpa check-in, semua sesi hari itu 0 poin.
+                </p>
+                  <F>{`Per pegawai, per hari. Sesi diurut waktu.
 C = akumulasi lantai NAIK hari itu (mulai 0)
 
 NAIK  n lantai → koef = koefisien(C + n) ; poin = n × ${POINTS_UP_PER_FLOOR} × koef ; lalu C += n
 TURUN m lantai → koef = koefisien(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR} × koef`}</F>
-          <div className="pt-1">
-            <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Koefisien harian (dari lantai naik kumulatif harian)
-            </div>
-            <table className="w-full text-[11px]">
-              <thead>
-                <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="py-1 font-semibold">Tingkat</th>
-                  <th className="py-1 text-right font-semibold">Lantai naik/hari</th>
-                  <th className="py-1 text-right font-semibold">Koefisien</th>
-                </tr>
-              </thead>
-              <tbody className="tabular text-foreground">
-                {TIERS.map((t) => (
-                  <tr key={t.key} className="border-b border-border/50 last:border-0">
-                    <td className="py-1" style={{ color: t.color }}>{t.emoji} {t.name}</td>
-                    <td className="py-1 text-right">{t.minDaily}–{t.maxDaily === 999 ? "∞" : t.maxDaily}</td>
-                    <td className="py-1 text-right">×{t.koef.toFixed(1)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="pt-1 text-[11px]">
-            <b className="text-foreground">Contoh:</b> naik LT1→LT12 saat C sudah 12 → koefisien(23)=×1,8 → 11 × {POINTS_UP_PER_FLOOR} × 1,8 ={" "}
-            {fmt(11 * POINTS_UP_PER_FLOOR * 1.8)} poin.
-          </p>
+                  <div className="pt-1">
+                    <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Koefisien harian (dari lantai naik kumulatif harian)
+                    </div>
+                    <table className="w-full text-[11px]">
+                      <thead>
+                        <tr className="border-b border-border text-left text-muted-foreground">
+                          <th className="py-1 font-semibold">Tingkat</th>
+                          <th className="py-1 text-right font-semibold">Lantai naik/hari</th>
+                          <th className="py-1 text-right font-semibold">Koefisien</th>
+                        </tr>
+                      </thead>
+                      <tbody className="tabular text-foreground">
+                        {TIERS.map((t) => (
+                          <tr key={t.key} className="border-b border-border/50 last:border-0">
+                            <td className="py-1" style={{ color: t.color }}>{t.emoji} {t.name}</td>
+                            <td className="py-1 text-right">{t.minDaily}–{t.maxDaily === 999 ? "∞" : t.maxDaily}</td>
+                            <td className="py-1 text-right">×{t.koef.toFixed(1)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="pt-1 text-[11px]">
+                    <b className="text-foreground">Contoh:</b> naik LT1→LT12 saat C sudah 12 → koefisien(23)=×1,8 → 11 × {POINTS_UP_PER_FLOOR} × 1,8 ={" "}
+                    {fmt(11 * POINTS_UP_PER_FLOOR * 1.8)} poin.
+                  </p>
+              </div>
+            </details>
+          ) : (
+            <>
+              <F>{`Per pegawai, per hari. Sesi diurut waktu.
+C = akumulasi lantai NAIK hari itu (mulai 0)
+
+NAIK  n lantai → koef = koefisien(C + n) ; poin = n × ${POINTS_UP_PER_FLOOR} × koef ; lalu C += n
+TURUN m lantai → koef = koefisien(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR} × koef`}</F>
+              <div className="pt-1">
+                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Koefisien harian (dari lantai naik kumulatif harian)
+                </div>
+                <table className="w-full text-[11px]">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="py-1 font-semibold">Tingkat</th>
+                      <th className="py-1 text-right font-semibold">Lantai naik/hari</th>
+                      <th className="py-1 text-right font-semibold">Koefisien</th>
+                    </tr>
+                  </thead>
+                  <tbody className="tabular text-foreground">
+                    {TIERS.map((t) => (
+                      <tr key={t.key} className="border-b border-border/50 last:border-0">
+                        <td className="py-1" style={{ color: t.color }}>{t.emoji} {t.name}</td>
+                        <td className="py-1 text-right">{t.minDaily}–{t.maxDaily === 999 ? "∞" : t.maxDaily}</td>
+                        <td className="py-1 text-right">×{t.koef.toFixed(1)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="pt-1 text-[11px]">
+                <b className="text-foreground">Contoh:</b> naik LT1→LT12 saat C sudah 12 → koefisien(23)=×1,8 → 11 × {POINTS_UP_PER_FLOOR} × 1,8 ={" "}
+                {fmt(11 * POINTS_UP_PER_FLOOR * 1.8)} poin.
+              </p>
+            </>
+          )}
         </Section>
 
         {/* 4. Badge pegawai */}
-        <Section n="4" title="Badge Pegawai (di leaderboard & detail)" sub="BEDA dari koefisien harian.">
+        <Section n="4" title="Badge Pegawai (di leaderboard & detail)" sub={v2 ? "Tanda kebiasaan; tidak mengubah poin." : "BEDA dari koefisien harian."}>
           <F>{`Badge = fungsi( rata-rata lantai naik / hari aktif )
         dengan GUARD konsistensi:
         1 hari aktif → maks Bronze · 2 → Silver · 3 → Gold
@@ -253,7 +322,7 @@ TURUN m lantai → koef = koefisien(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR
               </tr>
               <tr className="border-b border-border/50">
                 <td className="py-1.5 pr-2">Jumlah Anak Tangga</td>
-                <td className="py-1.5 pr-2 text-muted-foreground">konversi lantai berpoin → undakan: B2–B1 20, B1–LT1 24, antar-lantai atas 27</td>
+                <td className="py-1.5 pr-2 text-muted-foreground">konversi lantai berpoin → undakan: B2–B1 20, B1–LT1 24, antar-lantai atas 27 (Gedung 1: 27 per lantai, sementara)</td>
                 <td className="tabular py-1.5 text-right">{fmt(k.stairSteps)}</td>
               </tr>
               <tr className="border-b border-border/50">
@@ -263,7 +332,7 @@ TURUN m lantai → koef = koefisien(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR
               </tr>
               <tr className="border-b border-border/50">
                 <td className="py-1.5 pr-2">Perjalanan Lift Dihindari</td>
-                <td className="py-1.5 pr-2 text-muted-foreground">jumlah sesi tangga berpoin (hari check-in) <span className="text-[hsl(var(--warning))]">(per-sesi, batas atas)</span></td>
+                <td className="py-1.5 pr-2 text-muted-foreground">jumlah sesi tangga berpoin{v2 ? "" : " (hari check-in)"} <span className="text-[hsl(var(--warning))]">(per-sesi, batas atas)</span></td>
                 <td className="tabular py-1.5 text-right">{fmt(k.liftRidesAvoided)} kali</td>
               </tr>
               <tr className="border-b border-border/50">
@@ -283,7 +352,7 @@ TURUN m lantai → koef = koefisien(C)     ; poin = m × ${POINTS_DOWN_PER_FLOOR
         {/* 6. Dampak */}
         <Section n="6" title="Dampak Program — Lift · Emisi · Kalori" sub="Rincian rumus + sumber tiap angka.">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">A. Perjalanan Lift Dihindari</div>
-          <F>{`Perjalanan Lift Dihindari = jumlah sesi tangga berpoin, naik+turun (hari check-in) = ${fmt(k.liftRidesAvoided)} kali`}</F>
+          <F>{`Perjalanan Lift Dihindari = jumlah sesi tangga berpoin, naik+turun${v2 ? "" : " (hari check-in)"} = ${fmt(k.liftRidesAvoided)} kali`}</F>
           <p className="text-[11px]">
             ⚠️ Asumsi <b className="text-foreground">1 sesi = 1 perjalanan lift</b> (okupansi belum dikoreksi → batas
             atas). Koreksi lanjutan = bagi okupansi (orang per perjalanan lift).
@@ -308,7 +377,7 @@ Total = ${fmt(k.calories)} kkal`}</F>
         <Section n="7" title="Grafik &amp; Visual">
           <Row k="Tren Periode Berjalan" v="bar Poin (sumbu kiri) + garis Lantai Naik/Turun (sumbu kanan) per hari dalam siklus (23–22); toggle 'Hari Ini' = per jam tanggal berjalan" />
           <Row k="Distribusi Jam" v="jumlah sesi tangga NAIK vs TURUN per jam" />
-          <Row k="Peta Vertikal Gedung" v={`jumlah tap tangga per lantai (${LEVELS[0]}–${LEVELS[LEVELS.length - 1]}); zona ${CHECKPOINT_ZONE.join("–")} disorot`} />
+          <Row k="Peta Vertikal Gedung" v={`jumlah tap tangga per lantai, per gedung berdampingan (${gedung}); skala bar sama untuk semua gedung${v2 ? "" : `; zona ${CHECKPOINT_ZONE.join("–")} disorot`}`} />
           <Row k="Distribusi Badge" v="jumlah pegawai aktif per badge (lihat Bagian 4)" />
           <Row k="Leaderboard" v="urut poin; filter Pegawai PLN / Non-Pegawai; Streak = hari-kerja aktif beruntun" />
         </Section>
@@ -318,7 +387,7 @@ Total = ${fmt(k.calories)} kkal`}</F>
           <Row k="Energi lift (20 Wh/perjalanan)" v="ACEEE — Sachs, H. (2005), Opportunities for Elevator Energy Efficiency Improvements" />
           <Row k="Faktor emisi (0,773 kg/kWh)" v="proyeksi emisi grid nasional 2025 — 773 g/kWh (−6% 2030 · −37% 2040 · −75% 2050 · −100% 2060)" />
           <Row k="Berat badan (asumsi)" v={`${IMPACT.avgBodyWeightKg} kg untuk semua peserta — Kemenkes AKG 2019 (Permenkes No. 28/2019)`} />
-          <Row k="Peta lantai gedung" v="Door Config Report (159 reader, B2–LT15)" />
+          <Row k="Peta lantai gedung" v="Door Config Report (159 reader, B2–LT15) + daftar reader tangga (stair_reader): Gedung Utama 18, Gedung 1 9" />
           <Row k="Metode energi lift" v="ISO 25745-2:2015 (kerangka running + standby)" />
         </Section>
 

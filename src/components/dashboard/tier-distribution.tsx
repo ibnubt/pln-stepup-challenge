@@ -35,7 +35,7 @@ export function TierDistribution({ stats }: { stats: EmployeeStat[] }) {
           </div>
         ))}
         <p className="pt-1 text-[10px] text-muted-foreground">
-          Badge = rata-rata lantai naik / hari aktif (beda dari koefisien harian).
+          Badge = rata-rata lantai naik / hari aktif. Badge tidak mengubah poin.
         </p>
       </CardContent>
     </Card>

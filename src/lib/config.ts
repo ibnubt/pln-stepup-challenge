@@ -34,6 +34,33 @@ export const LEVEL_LABEL: Record<Level, string> = {
 
 export const levelIndex = (l: Level | string) => LEVELS.indexOf(l as Level);
 
+// ---- Gedung ----
+// Gedung ditentukan dari nama reader (taps.device = sourcename). Sesi naik/turun dideteksi
+// PER GEDUNG (tap Gedung 1 LT3 lalu Gedung Utama LT4 bukan satu perjalanan).
+// Kode lantai (LT1, LT2, ...) sama di semua gedung; index tetap dari LEVELS.
+export interface Building {
+  key: string;
+  name: string;
+  levels: Level[]; // lantai yang punya reader tangga (bawah → atas)
+  stepsPerFloor: number; // anak tangga per lantai di atas LT1
+}
+export const BUILDINGS: Building[] = [
+  { key: "UTAMA", name: "Gedung Utama", levels: [...LEVELS], stepsPerFloor: 27 }, // Tangga Darurat Tengah, B2–LT16
+  // Tangga Darurat Timur GD 1, LT1–LT9. Anak tangga per lantai SEMENTARA 27 (belum dikonfirmasi GA).
+  {
+    key: "G1",
+    name: "Gedung 1",
+    levels: ["LT1", "LT2", "LT3", "LT4", "LT5", "LT6", "LT7", "LT8", "LT9"],
+    stepsPerFloor: 27,
+  },
+];
+export const DEFAULT_BUILDING = "UTAMA";
+/** Gedung dari nama reader: diawali "GD 1" → Gedung 1, selain itu Gedung Utama. */
+export function buildingOf(device: string | null | undefined): string {
+  return /^\s*GD\s*1\b/i.test(device || "") ? "G1" : DEFAULT_BUILDING;
+}
+export const buildingName = (key: string) => BUILDINGS.find((b) => b.key === key)?.name ?? key;
+
 /** Zona checkpoint reward yang WAJIB dilewati (LT1–LT4). */
 export const CHECKPOINT_ZONE: Level[] = ["LT1", "LT2", "LT3", "LT4"];
 export const CHECKPOINT_MIN_IDX = levelIndex("LT1");
@@ -49,10 +76,10 @@ export const STEPS_B2_B1 = 20; // B2 ↔ B1
 export const STEPS_B1_LT1 = 24; // B1 ↔ LT1
 export const STEPS_PER_FLOOR = 27; // LT1 ↔ LT2 dan seterusnya ke atas
 /** Jumlah anak tangga 1 segmen antar-lantai bersebelahan (pakai index level TERBAWAH dari pasangan). */
-export function stepsForSegment(loIdx: number): number {
+export function stepsForSegment(loIdx: number, building: string = DEFAULT_BUILDING): number {
   if (loIdx <= levelIndex("B2")) return STEPS_B2_B1; // 0: B2↔B1
   if (loIdx === levelIndex("B1")) return STEPS_B1_LT1; // 1: B1↔LT1
-  return STEPS_PER_FLOOR; // ≥2: LT1↔LT2 dst
+  return BUILDINGS.find((b) => b.key === building)?.stepsPerFloor ?? STEPS_PER_FLOOR; // ≥2: LT1↔LT2 dst
 }
 
 // ---- Poin dasar ----

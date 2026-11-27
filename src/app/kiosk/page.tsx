@@ -48,7 +48,7 @@ export default async function KioskPage({ searchParams }: { searchParams: { mont
           <BoardLeaderboard stats={non} limit={10} title="Non-Pegawai" subtitle="Leaderboard" />
         </div>
         <div className="min-h-0" style={{ flex: "1 1 0%" }}>
-          <BoardFloorMap data={s.floorByDate} label={periodLabel(s.periodStart, s.periodEnd)} />
+          <BoardFloorMap data={s.floorByDate} label={periodLabel(s.periodStart, s.periodEnd)} showCheckpoint={s.rules === "v1"} />
         </div>
         <RunningText text="Perhatian khusus untuk Ibu hamil, lansia, penyandang disabilitas, dan pengguna dengan kondisi kesehatan tertentu harap berhati-hati saat menggunakan tangga." />
       </div>

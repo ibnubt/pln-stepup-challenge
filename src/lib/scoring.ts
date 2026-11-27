@@ -1,12 +1,16 @@
 // ============================================================================
 // Scoring engine — Program "Naik Tangga"
-// 1) rekonstruksi sesi tangga dari raw tap  2) koefisien progresif per-trip
+// 1) rekonstruksi sesi tangga dari raw tap (per gedung)  2) poin per sesi
+// Aturan poin per HARI:
+//   v1 (sebelum RULES_V2_START): wajib check-in LT1→LT4 + koefisien progresif 1,0–2,0
+//   v2 (mulai RULES_V2_START)  : tanpa check-in, tanpa koefisien → lantai × poin dasar
 // ============================================================================
 import {
   levelIndex,
   stepsForSegment,
   koefFor,
   tierFor,
+  buildingOf,
   levelFor,
   IMPACT,
   CHECKPOINT_MIN_IDX,
@@ -58,9 +62,10 @@ export interface Session {
   floors: number;
   startLevel: string;
   endLevel: string;
-  checkpoint: boolean; // sesi ini melewati SELURUH zona LT1→LT4 (dipakai deteksi check-in harian)
-  counted: boolean; // dapat poin (hari ini sudah check-in)
-  koef: number;
+  building: string; // kunci gedung (lihat BUILDINGS di config)
+  checkpoint: boolean; // sesi ini melewati SELURUH zona LT1→LT4 (dipakai deteksi check-in harian, aturan v1)
+  counted: boolean; // dapat poin (v1: hari itu sudah check-in; v2: selalu)
+  koef: number; // pengali poin (v2: selalu 1)
   points: number;
   steps: SessionStep[]; // jejak lantai per tap
 }
@@ -132,6 +137,7 @@ function detectSessions(stairTaps: Tap[]): Omit<Session, "koef" | "points" | "co
         floors: run.length - 1,
         startLevel,
         endLevel,
+        building: buildingOf(run[0].dev),
         checkpoint,
         steps: run.map((r) => ({ lvl: r.lvl, t: r.t.slice(11, 19) })),
       });
@@ -157,14 +163,23 @@ function detectSessions(stairTaps: Tap[]): Omit<Session, "koef" | "points" | "co
 }
 
 /**
- * Skoring 1 pegawai dalam 1 hari.
- * ATURAN CHECK-IN: pegawai harus melewati SELURUH zona LT1→LT4 dalam satu sesi
+ * Skoring 1 pegawai dalam 1 hari (sesi dari semua gedung digabung).
+ * ATURAN v2 (v2 = true): semua sesi dihitung, poin = lantai × poin dasar (naik 100, turun 50).
+ * ATURAN v1 — CHECK-IN: pegawai harus melewati SELURUH zona LT1→LT4 dalam satu sesi
  * (tap 1-2-3-4 atau sebaliknya) minimal sekali hari itu agar memenuhi syarat.
  * Setelah check-in, SEMUA sesi tangga hari itu dapat poin (termasuk gerakan antar-lantai
  * atas seperti LT7→LT9). Koefisien progresif per-trip.
  */
-function scoreDay(daySessions: Omit<Session, "koef" | "points" | "counted">[]): Session[] {
+function scoreDay(daySessions: Omit<Session, "koef" | "points" | "counted">[], v2 = false): Session[] {
   const sorted = [...daySessions].sort((a, b) => (a.time < b.time ? -1 : 1));
+  if (v2) {
+    return sorted.map((s) => ({
+      ...s,
+      counted: true,
+      koef: 1,
+      points: s.floors * (s.dir === "up" ? POINTS_UP_PER_FLOOR : POINTS_DOWN_PER_FLOOR),
+    }));
+  }
   const checkedIn = sorted.some((s) => s.checkpoint); // sudah tap checkpoint LT1-4 hari ini?
   let cumUp = 0; // akumulasi lantai NAIK hari itu
   const scored: Session[] = [];
@@ -187,6 +202,20 @@ function scoreDay(daySessions: Omit<Session, "koef" | "points" | "counted">[]): 
   return scored;
 }
 
+/** Sesi 1 pegawai dalam 1 hari: deteksi PER GEDUNG, lalu diskor bersama (check-in/koef v1 lintas gedung). */
+function scoreEmpDay(dayTaps: Tap[], v2: boolean): Session[] {
+  const raw: Omit<Session, "koef" | "points" | "counted">[] = [];
+  for (const [, bts] of groupBy(dayTaps, (t) => buildingOf(t.dev))) raw.push(...detectSessions(bts));
+  return scoreDay(raw, v2);
+}
+
+/** RULES_V2_START "YYYY-MM-DD" → tanggal valid atau null (null = semua hari pakai aturan v1). */
+export function normalizeRulesStart(raw?: string): string | null {
+  const d = (raw || "").trim().slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+}
+const isV2Day = (date: string, v2Start: string | null) => !!v2Start && date >= v2Start;
+
 export interface DayStat {
   date: string;
   upFloors: number;
@@ -196,6 +225,7 @@ export interface DayStat {
   stairTrips: number;
   liftTrips: number;
   checkedIn: boolean; // sudah tap checkpoint LT1-4 hari itu
+  v2: boolean; // hari ini memakai aturan v2 (tanpa check-in & koefisien)
 }
 
 export interface EmployeeStat {
@@ -242,10 +272,12 @@ export interface ScoreResult {
   periodEnd: string; // tanggal akhir periode "YYYY-MM-DD" (inklusif)
   resetDay: number; // hari reset siklus (1 = bulan kalender)
   availableMonths: string[]; // siklus yg ada datanya (untuk filter historis), terbaru dulu
+  rules: "v1" | "v2"; // aturan poin periode ini (v2 bila periode memuat hari ≥ RULES_V2_START)
+  rulesV2Start: string | null; // tanggal mulai aturan v2 (null = belum diaktifkan)
   todayHourly: HourStat[];
-  floorHeat: { level: string; stair: number; lift: number }[];
+  floorHeat: { building: string; level: string; stair: number; lift: number }[];
   hourly: { hour: number; up: number; down: number }[];
-  floorByDate: { level: string; date: string; stair: number; lift: number }[]; // untuk filter tanggal heatmap
+  floorByDate: { building: string; level: string; date: string; stair: number; lift: number }[]; // untuk filter tanggal heatmap
   hourlyByDate: { date: string; hour: number; up: number; down: number }[]; // untuk filter tanggal distribusi jam
   kpi: {
     activeEmployees: number;
@@ -308,8 +340,10 @@ export function computeScores(
   employees: Employee[],
   // month = kunci siklus "YYYY-MM" (default: siklus berjalan); programStart = cutoff reset;
   // resetDay = hari mulai siklus tiap bulan (1 = bulan kalender, mis. 23 = 23→22 bln berikutnya)
-  opts?: { month?: string; programStart?: string; resetDay?: number }
+  // rulesV2Start = tanggal mulai aturan v2 (tanpa check-in & koefisien); kosong = aturan v1
+  opts?: { month?: string; programStart?: string; resetDay?: number; rulesV2Start?: string }
 ): ScoreResult {
+  const v2Start = normalizeRulesStart(opts?.rulesV2Start);
   // RESET cutoff: abaikan tap sebelum PROGRAM_START. Data lama TETAP di DB, hanya
   // disembunyikan dari seluruh perhitungan (KPI, leaderboard, peta, daftar bulan).
   const epoch = normalizeEpoch(opts?.programStart);
@@ -349,9 +383,8 @@ export function computeScores(
   for (const [, ts] of byEmp) {
     const sorted = [...ts].sort((a, b) => (a.t < b.t ? -1 : 1));
     const byDay = groupBy(sorted, (t) => dateKey(t.t));
-    for (const [, dts] of byDay) {
-      const raw = detectSessions(dts);
-      allSessions.push(...scoreDay(raw));
+    for (const [date, dts] of byDay) {
+      allSessions.push(...scoreEmpDay(dts, isV2Day(date, v2Start)));
     }
   }
 
@@ -385,7 +418,8 @@ export function computeScores(
         tier: tierFor(up),
         stairTrips: ds.length,
         liftTrips: liftByEmpDay.get(`${emp.id}|${date}`) ?? 0,
-        checkedIn: true, // hari yang muncul di sini pasti sudah check-in
+        checkedIn: true, // hari yang muncul di sini pasti sudah check-in (atau aturan v2)
+        v2: isV2Day(date, v2Start),
       });
     }
     days.sort((a, b) => (a.date < b.date ? -1 : 1));
@@ -456,6 +490,7 @@ export function computeScores(
       stairTrips: 0,
       liftTrips: 0,
       checkedIn: true,
+      v2: isV2Day(s.date, v2Start),
     };
     if (s.dir === "up") d.upFloors += s.floors;
     else d.downFloors += s.floors;
@@ -480,26 +515,30 @@ export function computeScores(
         stairTrips: 0,
         liftTrips: 0,
         checkedIn: false,
+        v2: isV2Day(date, v2Start),
       }
     );
   }
 
   // --- heatmap lantai (traversal tangga vs lift per level) ---
-  const heat = new Map<string, { stair: number; lift: number }>();
+  const heat = new Map<string, { building: string; level: string; stair: number; lift: number }>();
   for (const t of taps) {
-    const h = heat.get(t.lvl) ?? { stair: 0, lift: 0 };
+    const building = buildingOf(t.dev);
+    const key = `${building}|${t.lvl}`;
+    const h = heat.get(key) ?? { building, level: t.lvl, stair: 0, lift: 0 };
     if (t.kind === "stair") h.stair += 1;
     else h.lift += 1;
-    heat.set(t.lvl, h);
+    heat.set(key, h);
   }
-  const floorHeat = Array.from(heat.entries()).map(([level, v]) => ({ level, ...v }));
+  const floorHeat = Array.from(heat.values());
 
   // heatmap per (lantai, tanggal) — untuk filter interval tanggal di komponen
-  const fbdMap = new Map<string, { level: string; date: string; stair: number; lift: number }>();
+  const fbdMap = new Map<string, { building: string; level: string; date: string; stair: number; lift: number }>();
   for (const t of monthTaps) {
     const date = dateKey(t.t);
-    const key = `${t.lvl}|${date}`;
-    const e = fbdMap.get(key) ?? { level: t.lvl, date, stair: 0, lift: 0 };
+    const building = buildingOf(t.dev);
+    const key = `${building}|${t.lvl}|${date}`;
+    const e = fbdMap.get(key) ?? { building, level: t.lvl, date, stair: 0, lift: 0 };
     if (t.kind === "stair") e.stair += 1;
     else e.lift += 1;
     fbdMap.set(key, e);
@@ -559,7 +598,7 @@ export function computeScores(
   for (const s of counted) {
     for (let k = 1; k < s.steps.length; k++) {
       const lo = Math.min(levelIndex(s.steps[k - 1].lvl), levelIndex(s.steps[k].lvl));
-      stairSteps += stepsForSegment(lo);
+      stairSteps += stepsForSegment(lo, s.building);
     }
   }
 
@@ -595,6 +634,8 @@ export function computeScores(
     periodEnd,
     resetDay,
     availableMonths,
+    rules: isV2Day(periodEnd, v2Start) ? "v2" : "v1",
+    rulesV2Start: v2Start,
     todayHourly,
     floorHeat,
     hourly,
@@ -648,10 +689,11 @@ export interface RecapRow {
 export function computeRangeRecap(
   taps: Tap[],
   employees: Employee[],
-  opts: { from: string; to: string; programStart?: string }
+  opts: { from: string; to: string; programStart?: string; rulesV2Start?: string }
 ): { rows: RecapRow[]; from: string; to: string; totals: { participants: number; upFloors: number; downFloors: number; stairSteps: number; points: number; liftAvoided: number } } {
   const epoch = normalizeEpoch(opts.programStart);
   if (epoch) taps = taps.filter((t) => t.t >= epoch);
+  const v2Start = normalizeRulesStart(opts.rulesV2Start);
   // buang kartu tak dikenal (nama kosong / nama = id)
   const namedIds = new Set(
     employees.filter((e) => {
@@ -672,8 +714,8 @@ export function computeRangeRecap(
     if (!emp) continue;
     const sorted = [...ts].sort((a, b) => (a.t < b.t ? -1 : 1));
     const sessions: Session[] = [];
-    for (const [, dts] of groupBy(sorted, (t) => dateKey(t.t))) {
-      sessions.push(...scoreDay(detectSessions(dts)));
+    for (const [date, dts] of groupBy(sorted, (t) => dateKey(t.t))) {
+      sessions.push(...scoreEmpDay(dts, isV2Day(date, v2Start)));
     }
     if (sessions.length === 0) continue;
     const counted = sessions.filter((s) => s.counted);
@@ -683,7 +725,7 @@ export function computeRangeRecap(
     let steps = 0;
     for (const s of counted)
       for (let k = 1; k < s.steps.length; k++)
-        steps += stepsForSegment(Math.min(levelIndex(s.steps[k - 1].lvl), levelIndex(s.steps[k].lvl)));
+        steps += stepsForSegment(Math.min(levelIndex(s.steps[k - 1].lvl), levelIndex(s.steps[k].lvl)), s.building);
     const activeDates = [...new Set(counted.map((s) => s.date))];
     const { longest } = streaks(activeDates);
     rows.push({

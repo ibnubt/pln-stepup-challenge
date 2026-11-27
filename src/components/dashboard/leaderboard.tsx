@@ -199,7 +199,7 @@ export function Leaderboard({ stats }: { stats: EmployeeStat[] }) {
                               <span
                                 className="inline-flex shrink-0 animate-pulse items-center gap-0.5 rounded px-1 text-[10px] font-bold leading-normal"
                                 style={{ color: s.live.color, background: `${s.live.color}22` }}
-                                title={`Sedang naik tangga — ${s.live.floors} lantai (koef ×${s.live.koef.toFixed(1)})`}
+                                title={`Sedang naik tangga — ${s.live.floors} lantai`}
                               >
                                 {s.live.emoji} {s.live.floors}
                               </span>

@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { fmt } from "@/lib/utils";
 import type { ScoreResult } from "@/lib/scoring";
+import { POINTS_UP_PER_FLOOR, POINTS_DOWN_PER_FLOOR } from "@/lib/config";
 import {
   Users,
   TrendingUp,
@@ -10,7 +11,8 @@ import {
   Flame,
 } from "lucide-react";
 
-export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
+export function KpiStrip({ kpi, rules = "v1" }: { kpi: ScoreResult["kpi"]; rules?: ScoreResult["rules"] }) {
+  const v2 = rules === "v2";
   const items = [
     {
       label: "Partisipan Aktif",
@@ -26,15 +28,17 @@ export function KpiStrip({ kpi }: { kpi: ScoreResult["kpi"] }) {
       sub: `${fmt(kpi.upFloors)}/${fmt(kpi.downFloors)} lantai naik/turun`,
       icon: TrendingUp,
       accent: "152 62% 40%",
-      tip: "Konversi lantai berpoin → anak tangga: B2–B1 20, B1–LT1 24, antar-lantai atas 27 undakan/lantai. Rincian lantai naik/turun ada di leaderboard.",
+      tip: "Konversi lantai berpoin → anak tangga: B2–B1 20, B1–LT1 24, antar-lantai atas 27 undakan/lantai (Gedung Utama dan Gedung 1). Rincian lantai naik/turun ada di leaderboard.",
     },
     {
       label: "Total Poin",
       value: fmt(kpi.totalPoints),
-      sub: "reward: lantai × poin × koef progresif",
+      sub: v2 ? "lantai naik × 100 + lantai turun × 50" : "reward: lantai × poin × koef progresif",
       icon: Trophy,
       accent: "45 100% 51%",
-      tip: "Naik = lantai×10×koef, Turun = lantai×5×koef. Koef 1.0–2.0 progresif per-trip.",
+      tip: v2
+        ? `Naik = lantai × ${POINTS_UP_PER_FLOOR}, Turun = lantai × ${POINTS_DOWN_PER_FLOOR}. Semua sesi tangga dihitung, tanpa check-in dan tanpa koefisien.`
+        : `Naik = lantai × ${POINTS_UP_PER_FLOOR} × koef, Turun = lantai × ${POINTS_DOWN_PER_FLOOR} × koef. Koef 1.0–2.0 progresif per-trip, wajib check-in LT1→LT4.`,
     },
     {
       label: "Perjalanan Lift Dihindari",

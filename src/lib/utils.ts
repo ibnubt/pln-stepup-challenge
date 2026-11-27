@@ -64,6 +64,12 @@ export function periodLabel(start: string, end: string): string {
   return `${left} – ${right}`;
 }
 
+/** Label satu tanggal "YYYY-MM-DD" → "23 Nov 2026". */
+export function dateLabel(d: string): string {
+  const [y, m, dd] = d.split("-").map(Number);
+  return `${dd} ${BULAN_SHORT[m - 1]} ${y}`;
+}
+
 /** Label periode langsung dari kunci siklus + resetDay. */
 export function cycleLabel(key: string, resetDay: number): string {
   const { start, end } = cycleWindow(key, resetDay);

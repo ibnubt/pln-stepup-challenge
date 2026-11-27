@@ -47,6 +47,7 @@ export async function getScores(month?: string) {
     month,
     programStart: process.env.PROGRAM_START,
     resetDay: Number(process.env.RESET_DAY) || 1,
+    rulesV2Start: process.env.RULES_V2_START,
   });
   scoreCache.set(key, { rawAt: raw.at, result });
   return result;
@@ -55,5 +56,10 @@ export async function getScores(month?: string) {
 /** Rekap per pegawai untuk rentang tanggal [from,to] (YYYY-MM-DD, inklusif) — untuk export. */
 export async function getRecap(from: string, to: string) {
   const raw = await loadRaw();
-  return computeRangeRecap(raw.taps, raw.employees, { from, to, programStart: process.env.PROGRAM_START });
+  return computeRangeRecap(raw.taps, raw.employees, {
+    from,
+    to,
+    programStart: process.env.PROGRAM_START,
+    rulesV2Start: process.env.RULES_V2_START,
+  });
 }

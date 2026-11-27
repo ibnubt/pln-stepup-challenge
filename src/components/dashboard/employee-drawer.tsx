@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import type { EmployeeStat, Session, DayStat } from "@/lib/scoring";
 import { TierBadge } from "@/components/ui/badge";
-import { tierFor, PERSONA_LABEL, PERSONA_DESC } from "@/lib/config";
+import { tierFor, PERSONA_LABEL, PERSONA_DESC, DEFAULT_BUILDING, buildingName } from "@/lib/config";
 import { cn, fmt } from "@/lib/utils";
 import {
   X,
@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 // —— satu baris sesi: collapsible, tampilkan waktu mulai–selesai ——
-function SessionRow({ s }: { s: Session }) {
+function SessionRow({ s, v2 = false }: { s: Session; v2?: boolean }) {
   const [open, setOpen] = useState(false);
   const up = s.dir === "up";
   const start = s.steps[0]?.t.slice(0, 5) ?? s.time.slice(11, 16);
@@ -42,7 +42,12 @@ function SessionRow({ s }: { s: Session }) {
           {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
           {s.startLevel}→{s.endLevel}
         </span>
-        {s.checkpoint && (
+        {s.building !== DEFAULT_BUILDING && (
+          <span className="shrink-0 whitespace-nowrap rounded-sm bg-primary/10 px-1 text-[8px] font-bold uppercase leading-normal text-primary">
+            {buildingName(s.building)}
+          </span>
+        )}
+        {!v2 && s.checkpoint && (
           <span className="shrink-0 whitespace-nowrap rounded-sm bg-pln-yellow/20 px-1 text-[8px] font-bold uppercase leading-normal text-pln-gold" title="sesi ini melewati seluruh LT1→LT4">
             check-in
           </span>
@@ -51,7 +56,7 @@ function SessionRow({ s }: { s: Session }) {
         <span className="tabular ml-auto shrink-0 text-right text-[10px]">
           {s.counted ? (
             <span className="font-semibold text-foreground">
-              {fmt(s.points)} <span className="font-normal text-muted-foreground">poin ×{s.koef.toFixed(1)}</span>
+              {fmt(s.points)} <span className="font-normal text-muted-foreground">poin{v2 ? "" : ` ×${s.koef.toFixed(1)}`}</span>
             </span>
           ) : (
             <span className="rounded bg-muted px-1 py-0.5 text-muted-foreground">tanpa check-in</span>
@@ -97,7 +102,7 @@ function DayGroup({ date, sessions, day }: { date: string; sessions: Session[]; 
       >
         <ChevronRight className={cn("h-3 w-3 shrink-0 text-muted-foreground transition-transform", open && "rotate-90")} />
         <span className="tabular font-semibold text-foreground">{dayLabel(date)}</span>
-        {day ? (
+        {day?.v2 ? null : day ? (
           <span
             className="rounded px-1.5 py-0.5 text-[9px] font-semibold"
             style={{ background: `${day.tier.color}1a`, color: day.tier.color }}
@@ -115,7 +120,7 @@ function DayGroup({ date, sessions, day }: { date: string; sessions: Session[]; 
       {open && (
         <div className="space-y-1.5 border-t border-border/50 bg-muted/10 p-2">
           {shownSess.map((s, i) => (
-            <SessionRow key={i} s={s} />
+            <SessionRow key={i} s={s} v2={!!day?.v2} />
           ))}
           {totalSp > 1 && (
             <div className="flex items-center justify-between pt-1 text-[10px] text-muted-foreground">
@@ -186,7 +191,7 @@ function DayTooltip({ active, payload }: any) {
     <div className="rounded-lg border border-border bg-card/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
       <div className="font-semibold">{shortDate(d.date)}</div>
       <div className="tabular mt-1 text-muted-foreground">
-        {fmt(d.points)} poin · {d.upFloors} lt naik · Koef ×{tierFor(d.upFloors).koef.toFixed(1)}
+        {fmt(d.points)} poin · {d.upFloors} lt naik{d.v2 ? "" : ` · Koef ×${tierFor(d.upFloors).koef.toFixed(1)}`}
       </div>
     </div>
   );

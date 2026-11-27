@@ -18,8 +18,8 @@ export default async function DashboardPage({
 }) {
   const s = await getScores(searchParams?.month); // bulan terpilih (historis) atau bulan berjalan
 
-  // Distribusi tier: hanya pegawai BERPOIN (sudah check-in). Leaderboard: tampilkan SEMUA yang
-  // naik tangga (punya sesi) — yang belum check-in muncul abu-abu, skor 0 (lihat Leaderboard).
+  // Distribusi tier: hanya pegawai BERPOIN. Leaderboard: tampilkan SEMUA yang naik tangga (punya sesi).
+  // Aturan v1: yang belum check-in muncul abu-abu, skor 0 (lihat Leaderboard). Aturan v2: semua berpoin.
   const ranked = s.employeeStats.filter((e) => e.activeDays > 0);
 
   return (
@@ -27,14 +27,14 @@ export default async function DashboardPage({
       <AppBar month={s.month} availableMonths={s.availableMonths} resetDay={s.resetDay} />
 
       <main className="container space-y-4 py-6">
-        <KpiStrip kpi={s.kpi} />
+        <KpiStrip kpi={s.kpi} rules={s.rules} />
 
         {/* Leaderboard + Peta Vertikal Gedung — dipindah ke atas */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <Leaderboard stats={s.employeeStats} />
           </div>
-          <FloorHeatmap data={s.floorByDate} today={s.today} />
+          <FloorHeatmap data={s.floorByDate} today={s.today} showCheckpoint={s.rules === "v1"} />
         </div>
 
         {/* Aktivitas + Aturan Reward */}
@@ -42,7 +42,7 @@ export default async function DashboardPage({
           <div className="lg:col-span-2">
             <TrendChart monthly={s.byDate} today={s.todayHourly} todayDate={s.today} />
           </div>
-          <SchemeCard />
+          <SchemeCard rules={s.rules} rulesV2Start={s.rulesV2Start} />
         </div>
 
         <ImpactCard kpi={s.kpi} />
