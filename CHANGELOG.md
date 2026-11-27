@@ -10,7 +10,7 @@ Tiap versi punya git tag `vX.Y.Z`. Cara rilis dan rollback ada di README bagian 
 
 ## [Belum dirilis]
 
-Rencana nomor: 1.1.0.
+Rencana nomor: 1.1.0. Build uji di DEV: 1.1.0-rc.1.
 
 ### Skor (aturan v2)
 - Check-in harian LT1 sampai LT4 dihapus. Semua sesi tangga yang lolos deteksi sesi langsung dapat poin.
