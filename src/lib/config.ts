@@ -34,6 +34,13 @@ export const LEVEL_LABEL: Record<Level, string> = {
 
 export const levelIndex = (l: Level | string) => LEVELS.indexOf(l as Level);
 
+// ---- Alias nomor kartu (reader salah format) ----
+// Sejak 23 Nov 2026 reader "L9 Tangga Darurat Tengah" mengirim nomor kartu yang masih bercampur
+// facility code 57 (nomor = kartu asli + 57 × 65536), sehingga tak cocok ke identitas mana pun.
+// Saat data dibaca, kartu tanpa nama bernomor N dipetakan ke pegawai bernama dengan kartu N − offset.
+// Tanpa menulis ke DB; aman bila reader sudah dibetulkan (tak ada lagi nomor seperti ini).
+export const CARD_FC_OFFSETS = [57 * 65536]; // 3.735.552
+
 // ---- Gedung ----
 // Gedung ditentukan dari nama reader (taps.device = sourcename). Sesi naik/turun dideteksi
 // PER GEDUNG (tap Gedung 1 LT3 lalu Gedung Utama LT4 bukan satu perjalanan).

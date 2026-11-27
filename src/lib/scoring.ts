@@ -11,6 +11,7 @@ import {
   koefFor,
   tierFor,
   buildingOf,
+  CARD_FC_OFFSETS,
   levelFor,
   IMPACT,
   CHECKPOINT_MIN_IDX,
@@ -320,6 +321,39 @@ function streaks(dates: string[]): { current: number; longest: number } {
     longest = Math.max(longest, run);
   }
   return { current: run, longest };
+}
+
+const isNamed = (e: Employee) => {
+  const n = (e.name || "").trim();
+  return n !== "" && n !== String(e.id).trim();
+};
+
+/**
+ * Pulihkan tap dari reader yang salah format kartu (lihat CARD_FC_OFFSETS): pegawai TANPA nama
+ * ber-id angka N dipetakan ke pegawai BERNAMA yang kartunya N − offset. Bila satu kartu dimiliki
+ * >1 id (identitas ganda), pilih id dengan tap terakhir paling baru. Mengembalikan array tap baru.
+ */
+export function resolveCardAliases(taps: Tap[], employees: Employee[]): Tap[] {
+  const byCard = new Map<number, string[]>();
+  for (const e of employees) {
+    if (!isNamed(e) || !e.card) continue;
+    (byCard.get(e.card) ?? byCard.set(e.card, []).get(e.card)!).push(e.id);
+  }
+  const lastTap = new Map<string, string>();
+  for (const t of taps) if ((lastTap.get(t.e) ?? "") < t.t) lastTap.set(t.e, t.t);
+  const alias = new Map<string, string>();
+  for (const e of employees) {
+    if (isNamed(e) || !/^\d+$/.test(String(e.id))) continue;
+    const n = Number(e.id);
+    for (const off of CARD_FC_OFFSETS) {
+      const cands = byCard.get(n - off);
+      if (!cands?.length) continue;
+      alias.set(e.id, cands.reduce((a, b) => ((lastTap.get(b) ?? "") > (lastTap.get(a) ?? "") ? b : a)));
+      break;
+    }
+  }
+  if (!alias.size) return taps;
+  return taps.map((t) => (alias.has(t.e) ? { ...t, e: alias.get(t.e)! } : t));
 }
 
 /**

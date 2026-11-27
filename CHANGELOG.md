@@ -10,7 +10,7 @@ Tiap versi punya git tag `vX.Y.Z`. Cara rilis dan rollback ada di README bagian 
 
 ## [Belum dirilis]
 
-Rencana nomor: 1.1.0. Build uji di DEV: 1.1.0-rc.1.
+Rencana nomor: 1.1.0. Build uji di DEV: 1.1.0-rc.2.
 
 ### Skor (aturan v2)
 - Check-in harian LT1 sampai LT4 dihapus. Semua sesi tangga yang lolos deteksi sesi langsung dapat poin.
@@ -23,6 +23,9 @@ Rencana nomor: 1.1.0. Build uji di DEV: 1.1.0-rc.1.
 - Poin, KPI, dan leaderboard tetap digabung untuk dua gedung.
 - Peta vertikal (dashboard, display, kiosk) menampilkan Gedung Utama dan Gedung 1 berdampingan dengan skala bar yang sama.
 - Anak tangga Gedung 1 sementara 27 per lantai, menunggu angka dari GA.
+
+### Perbaikan data
+- Reader "L9 Tangga Darurat Tengah" sejak 23 Nov 2026 mengirim nomor kartu yang masih bercampur facility code 57 (nomor = kartu asli + 3.735.552), sehingga semua tap LT9 Gedung Utama terbaca sebagai kartu tak dikenal dan dibuang. Saat data dibaca, nomor itu sekarang dipetakan kembali ke pemilik kartunya (`CARD_FC_OFFSETS` di config). Database tidak diubah. Pada data 23 sampai 27 Nov: 540 tap pulih, 104 pegawai bertambah poinnya, tidak ada yang berkurang.
 
 ### Tampilan
 - Kartu "Aturan Reward", tooltip Total Poin, detail pegawai, dan halaman metodologi mengikuti aturan periode yang dipilih. Untuk aturan v2: tanpa label check-in, tanpa koefisien, dan tabel badge menggantikan tabel koefisien. Aturan lama tetap terdokumentasi di metodologi.

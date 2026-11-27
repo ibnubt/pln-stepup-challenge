@@ -1,6 +1,6 @@
 import tapsRaw from "@/data/taps.json";
 import employeesRaw from "@/data/employees.json";
-import { computeScores, computeRangeRecap, type Tap, type Employee } from "./scoring";
+import { computeScores, computeRangeRecap, resolveCardAliases, type Tap, type Employee } from "./scoring";
 
 // Sumber data:
 //   default        → JSON demo (src/data/*.json) — statis, tanpa DB
@@ -33,6 +33,7 @@ async function loadRaw() {
     taps = tapsRaw as Tap[];
     employees = employeesRaw as Employee[];
   }
+  taps = resolveCardAliases(taps, employees); // pulihkan tap reader salah format kartu (L9 Tengah)
   rawCache = { at: Date.now(), taps, employees };
   return rawCache;
 }
